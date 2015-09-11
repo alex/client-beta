@@ -11,10 +11,6 @@ Thanks for your patience!
 This is an exact copy of our source from our main private repo, and all release builds are generated from this repo.
 Any pre-built binaries hosted here are also built from the source hosted here.
 
-### Install
-
-See [Homebrew Keybase Install](https://github.com/keybase/homebrew-keybase#install) to install from the beta tap.
-
 ### Issues
 
 Any security related issues, please see our [HackerOne page](https://hackerone.com/keybase).
