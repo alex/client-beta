@@ -13,7 +13,7 @@ Any pre-built binaries hosted here are also built from the source hosted here.
 
 ### Install
 
-See [Install](https://github.com/keybase/homebrew-keybase#install) to install from the beta tap.
+See [Homebrew Keybase Install](https://github.com/keybase/homebrew-keybase#install) to install from the beta tap.
 
 ### Issues
 
