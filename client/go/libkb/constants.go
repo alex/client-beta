@@ -114,6 +114,8 @@ const (
 	SCKeyNoEldest            = 920
 	SCKeyDuplicateUpdate     = 921
 	SCBadTrackSession        = 1301
+	SCDeviceNotFound         = 1409
+	SCDeviceMismatch         = 1410
 	SCStreamExists           = 1501
 	SCStreamNotFound         = 1502
 	SCStreamWrongKind        = 1503
@@ -123,6 +125,7 @@ const (
 	SCProofError             = 1701
 	SCIdentificationExpired  = 1702
 	SCSelfNotFound           = 1703
+	SCBadKexPhrase           = 1704
 )
 
 const (

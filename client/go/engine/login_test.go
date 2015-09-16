@@ -147,8 +147,8 @@ func TestLoginPGPSignNewDevice(t *testing.T) {
 	}
 
 	after := docui.selectSignerCount
-	if after-before != 1 {
-		t.Errorf("doc ui SelectSigner called %d times, expected 1", after-before)
+	if after-before != 0 {
+		t.Errorf("doc ui SelectSigner called %d times, expected 0", after-before)
 	}
 
 	testUserHasDeviceKey(tc2)

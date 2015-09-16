@@ -901,13 +901,39 @@ func (c CanceledError) Error() string {
 
 //=============================================================================
 
-var ErrNoDevice = errors.New("No device found")
-var ErrTimeout = errors.New("Operation timed out")
+type NoDeviceError struct {
+	Reason string
+}
+
+func (e NoDeviceError) Error() string {
+	return fmt.Sprintf("No device found %s", e.Reason)
+}
+
+type TimeoutError struct{}
+
+func (e TimeoutError) Error() string {
+	return "Operation timed out"
+}
+
+type ReceiverDeviceError struct {
+	Msg string
+}
+
+func NewReceiverDeviceError(expected, received keybase1.DeviceID) ReceiverDeviceError {
+	return ReceiverDeviceError{Msg: fmt.Sprintf("Device ID mismatch in message receiver, got %q, expected %q", received, expected)}
+}
+
+func (e ReceiverDeviceError) Error() string {
+	return e.Msg
+}
+
+type InvalidKexPhraseError struct{}
+
+func (e InvalidKexPhraseError) Error() string {
+	return "Invalid kex secret phrase"
+}
+
 var ErrNilUser = errors.New("User is nil")
-var ErrReceiverDevice = errors.New("Device ID mismatch in message receiver")
-var ErrInvalidKexSession = errors.New("Invalid kex session ID")
-var ErrInvalidKexPhrase = errors.New("Invalid kex secret phrase")
-var ErrCannotGenerateDevice = errors.New("Cannot generate new device ID")
 
 //=============================================================================
 

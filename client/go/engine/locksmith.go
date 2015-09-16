@@ -108,6 +108,26 @@ func (d *Locksmith) hasPGP() bool {
 	return len(d.arg.User.GetActivePGPKeys(false)) > 0
 }
 
+func (d *Locksmith) hasSingleSyncedPGPKey(ctx *Context) bool {
+	ckf := d.arg.User.GetComputedKeyFamily()
+	if ckf == nil {
+		return false
+	}
+
+	var count int
+	if ctx.LoginContext != nil {
+		count = len(ctx.LoginContext.SecretSyncer().AllActiveKeys(ckf))
+	} else {
+		aerr := d.G().LoginState().SecretSyncer(func(ss *libkb.SecretSyncer) {
+			count = len(ss.AllActiveKeys(ckf))
+		}, "Locksmith - hasSingleSyncedPGPKey")
+		if aerr != nil {
+			return false
+		}
+	}
+	return count == 1
+}
+
 func (d *Locksmith) fix(ctx *Context) error {
 	return nil
 }
@@ -177,7 +197,7 @@ func (d *Locksmith) checkKeys(ctx *Context) error {
 	d.G().Log.Debug("| Syncing secrets")
 	d.syncSecrets(ctx)
 
-	hasPGP := len(d.user.GetActivePGPKeys(false)) > 0
+	hasPGP := d.hasPGP()
 
 	hasActiveDevice, err := d.hasActiveDevice(ctx)
 	if err != nil {
@@ -303,6 +323,14 @@ func (d *Locksmith) deviceSign(ctx *Context, withPGPOption bool) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	if len(devs) == 0 && withPGPOption {
+		if d.hasSingleSyncedPGPKey(ctx) {
+			// the user only has a synced pgp key, so bypass the
+			// select signer interface.
+			return d.deviceSignPGP(ctx)
+		}
 	}
 
 	var arg keybase1.SelectSignerArg
@@ -461,7 +489,7 @@ func (d *Locksmith) deviceSignPGP(ctx *Context) error {
 			return err
 		}
 
-		pgpk, err := skb.PromptAndUnlock(ctx.LoginContext, "pgp sign", "keybase", nil, ctx.SecretUI, nil, d.arg.User)
+		pgpk, err := skb.PromptAndUnlock(ctx.LoginContext, "sign new device", "keybase", nil, ctx.SecretUI, nil, d.arg.User)
 		if err != nil {
 			return err
 		}
