@@ -1,15 +1,8 @@
 ## Keybase
 
-This repository contains source and releases for:
+This repository contains beta source code and releases for the Keybase client and service.
 
-- Go client and services.
-- Protocol definitions and stubs for our services.
-
-**Warning**: This is meant to be a temporary repository, and will be removed when we open the main keybase repo, hopefully very soon.
-Thanks for your patience!
-
-This is an exact copy of our source from our main private repo, and all release builds are generated from this repo.
-Any pre-built binaries hosted here are also built from the source hosted here.
+**Warning**: This is a temporary and experimental repository, and will be removed in the future.
 
 ### Issues
 
