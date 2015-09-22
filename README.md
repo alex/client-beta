@@ -8,4 +8,4 @@ This repository contains beta source code and releases for the Keybase client an
 
 Any security related issues, please see our [HackerOne page](https://hackerone.com/keybase).
 
-Other issues can be submitted via [Issues](https://github.com/keybase/client-beta-beta/issues).
+Other issues can be submitted via [Issues](https://github.com/keybase/keybase-issues/issues).
