@@ -101,6 +101,7 @@ const (
 	SCGeneric                = 218
 	SCAlreadyLoggedIn        = 235
 	SCCanceled               = 237
+	SCReloginRequired        = 274
 	SCBadSignupUsernameTaken = 701
 	SCKeyNotFound            = 901
 	SCKeyInUse               = 907
@@ -116,6 +117,7 @@ const (
 	SCBadTrackSession        = 1301
 	SCDeviceNotFound         = 1409
 	SCDeviceMismatch         = 1410
+	SCDeviceRequired         = 1411
 	SCStreamExists           = 1501
 	SCStreamNotFound         = 1502
 	SCStreamWrongKind        = 1503

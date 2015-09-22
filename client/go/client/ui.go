@@ -178,7 +178,7 @@ func (w RemoteProofWrapper) GetHostname() string       { return w.p.Value }
 func (w RemoteProofWrapper) GetDomain() string         { return w.p.Value }
 
 func (w RemoteProofWrapper) ToDisplayString() string {
-	return libkb.NewMarkup(w.p.DisplayMarkup).GetRaw()
+	return w.p.DisplayMarkup
 }
 
 type LinkCheckResultWrapper struct {
@@ -473,7 +473,7 @@ type LocksmithUI struct {
 }
 
 func (d LocksmithUI) PromptDeviceName(dummy int) (string, error) {
-	return d.parent.Prompt("Enter a name for this device", false, libkb.CheckDeviceName)
+	return d.parent.Prompt("Enter a public name for this device", false, libkb.CheckDeviceName)
 }
 
 func (d LocksmithUI) DeviceNameTaken(arg keybase1.DeviceNameTakenArg) error {
@@ -616,15 +616,21 @@ func (l LoginUI) DisplayPrimaryPaperKey(arg keybase1.DisplayPrimaryPaperKeyArg) 
 	if l.noPrompt {
 		return nil
 	}
-	l.parent.Printf("IMPORTANT: PAPER KEY GENERATION\n\n")
+	l.parent.Printf("\n")
+	l.parent.Printf("===============================\n")
+	l.parent.Printf("IMPORTANT: PAPER KEY GENERATION\n")
+	l.parent.Printf("===============================\n\n")
 	l.parent.Printf("During Keybase's alpha, everyone gets a paper key. This is a private key.\n")
 	l.parent.Printf("  1. you must write it down\n")
-	l.parent.Printf("  2. it can be used to recover data\n")
-	l.parent.Printf("  3. it can be used to add new computers before we have a mobile app, so your wallet is a good place for it.\n\n")
+	l.parent.Printf("  2. the first two words are a public label\n")
+	l.parent.Printf("  3. it can be used to recover data\n")
+	l.parent.Printf("  4. it can provision new keys/devices, so put it in your wallet\n")
+	l.parent.Printf("  5. just like any other device, it'll be revokable/replaceable if you lose it\n\n")
 	l.parent.Printf("Your paper key is\n\n")
 	l.parent.Printf("\t%s\n\n", arg.Phrase)
-	l.parent.Printf("Write it down now.\n\n")
-	confirmed, err := l.parent.PromptYesNo("Have you written down the above key?", PromptDefaultNo)
+	l.parent.Printf("Write it down....now!\n\n")
+
+	confirmed, err := l.parent.PromptYesNo("Have you written down the above paper key?", PromptDefaultNo)
 	if err != nil {
 		return err
 	}
@@ -632,6 +638,18 @@ func (l LoginUI) DisplayPrimaryPaperKey(arg keybase1.DisplayPrimaryPaperKeyArg) 
 		l.parent.Printf("\nPlease write down your paper key\n\n")
 		l.parent.Printf("\t%s\n\n", arg.Phrase)
 		confirmed, err = l.parent.PromptYesNo("Now have you written it down?", PromptDefaultNo)
+		if err != nil {
+			return err
+		}
+	}
+
+	confirmed, err = l.parent.PromptYesNo("Excellent!  Is it in your wallet?", PromptDefaultNo)
+	if err != nil {
+		return err
+	}
+	for !confirmed {
+		l.parent.Printf("\nPlease put it in your wallet.\n\n")
+		confirmed, err = l.parent.PromptYesNo("Now is it in your wallet?", PromptDefaultNo)
 		if err != nil {
 			return err
 		}

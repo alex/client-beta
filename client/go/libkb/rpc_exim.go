@@ -214,6 +214,10 @@ func ImportStatusAsError(s *keybase1.Status) error {
 		return ReceiverDeviceError{Msg: s.Desc}
 	case SCBadKexPhrase:
 		return InvalidKexPhraseError{}
+	case SCReloginRequired:
+		return ReloginRequiredError{}
+	case SCDeviceRequired:
+		return DeviceRequiredError{}
 	default:
 		ase := AppStatusError{
 			Code:   s.Code,
@@ -721,6 +725,22 @@ func (e InvalidKexPhraseError) ToStatus() keybase1.Status {
 	return keybase1.Status{
 		Code: SCBadKexPhrase,
 		Name: "SC_BAD_KEX_PHRASE",
+		Desc: e.Error(),
+	}
+}
+
+func (e ReloginRequiredError) ToStatus() keybase1.Status {
+	return keybase1.Status{
+		Code: SCReloginRequired,
+		Name: "SC_RELOGIN_REQUIRED",
+		Desc: e.Error(),
+	}
+}
+
+func (e DeviceRequiredError) ToStatus() keybase1.Status {
+	return keybase1.Status{
+		Code: SCDeviceRequired,
+		Name: "SC_DEVICE_REQUIRED",
 		Desc: e.Error(),
 	}
 }

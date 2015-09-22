@@ -51,6 +51,7 @@ func mainInner(g *libkb.GlobalContext) error {
 	cl := libcmdline.NewCommandLine(true, client.GetExtraFlags())
 	cl.AddCommands(client.GetCommands(cl))
 	cl.AddCommands(service.GetCommands(cl))
+	cl.AddHelpTopics(client.GetHelpTopics())
 
 	var err error
 	cmd, err = cl.Parse(os.Args)
@@ -87,7 +88,13 @@ func mainInner(g *libkb.GlobalContext) error {
 		if cl.IsNoStandalone() {
 			return fmt.Errorf("Can't run command in standalone mode")
 		}
-		service.NewService(false /* isDaemon */).StartLoopbackServer(g)
+		if err := service.NewService(false /* isDaemon */).StartLoopbackServer(g); err != nil {
+			if pflerr, ok := err.(libkb.PIDFileLockError); ok {
+				err = fmt.Errorf("Can't run in standalone mode with a service running (see %q)",
+					pflerr.Filename)
+			}
+			return err
+		}
 	} else {
 		// If this command warrants an autofork, do it now.
 		if fc := cl.GetForkCmd(); fc == libcmdline.ForceFork || (g.Env.GetAutoFork() && fc != libcmdline.NoFork) {
@@ -99,9 +106,13 @@ func mainInner(g *libkb.GlobalContext) error {
 		// mode (as opposed to standalone). Register a global LogUI so that
 		// calls to G.Log() in the daemon can be copied to us. This is
 		// something of a hack on the daemon side.
-		err = registerGlobalLogUI(g)
-		if err != nil {
-			return err
+		if g.Env.GetLocalRPCDebug() != "" {
+			g.Log.Info("Disabling log forwarding due to RPC debugging.")
+		} else {
+			err = registerGlobalLogUI(g)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

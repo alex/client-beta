@@ -1,3 +1,5 @@
+// +build !release
+
 package libkb
 
 import (
@@ -176,6 +178,10 @@ func setupTestContext(t *testing.T, nm string) (tc TestContext, err error) {
 	if err = g.ConfigureAPI(); err != nil {
 		return
 	}
+
+	// use stub engine for external api
+	g.XAPI = NewStubAPIEngine()
+
 	if err = g.ConfigureConfig(); err != nil {
 		return
 	}

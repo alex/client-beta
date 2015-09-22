@@ -77,9 +77,6 @@ func (p CommandLine) GetPGPFingerprint() *libkb.PGPFingerprint {
 func (p CommandLine) GetProxy() string {
 	return p.GetGString("proxy")
 }
-func (p CommandLine) GetUsername() libkb.NormalizedUsername {
-	return libkb.NewNormalizedUsername(p.GetGString("username"))
-}
 func (p CommandLine) GetLogFormat() string {
 	return p.GetGString("log-format")
 }
@@ -244,10 +241,6 @@ func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 			Usage: "Specify an alternate API URI path prefix.",
 		},
 		cli.StringFlag{
-			Name:  "username, u",
-			Usage: "Specify Keybase username of the current user.",
-		},
-		cli.StringFlag{
 			Name:  "pinentry",
 			Usage: "Specify a path to find a pinentry program.",
 		},
@@ -278,10 +271,6 @@ func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 		cli.StringFlag{
 			Name:  "log-format",
 			Usage: "Log format (default, plain, file, fancy).",
-		},
-		cli.StringFlag{
-			Name:  "label",
-			Usage: "Specifying a label can help identify services.",
 		},
 		cli.StringFlag{
 			Name:  "pgpdir, gpgdir",
@@ -340,14 +329,6 @@ func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 		app.Flags = append(app.Flags, extraFlags...)
 	}
 
-	// Finally, add help if we asked for it
-	if addHelp {
-		app.Action = func(c *cli.Context) {
-			p.cmd = &CmdGeneralHelp{CmdBaseHelp{c}}
-			p.ctx = c
-			p.name = "help"
-		}
-	}
 	app.Commands = []cli.Command{}
 }
 
@@ -417,4 +398,10 @@ func (p *CommandLine) Parse(args []string) (cmd Command, err error) {
 
 func (p *CommandLine) SetOutputWriter(w io.Writer) {
 	p.app.Writer = w
+}
+
+// AddHelpTopics appends topics to the list of help topics for
+// this app.
+func (p *CommandLine) AddHelpTopics(topics []cli.HelpTopic) {
+	p.app.HelpTopics = append(p.app.HelpTopics, topics...)
 }

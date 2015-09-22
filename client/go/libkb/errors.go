@@ -429,6 +429,18 @@ func (e LoginRequiredError) Error() string {
 	return msg
 }
 
+type ReloginRequiredError struct{}
+
+func (e ReloginRequiredError) Error() string {
+	return "Login required due to an unexpected error since your previous login."
+}
+
+type DeviceRequiredError struct{}
+
+func (e DeviceRequiredError) Error() string {
+	return "Provisioned device required; login to provision this device"
+}
+
 //=============================================================================
 
 type LogoutError struct{}
@@ -996,21 +1008,21 @@ func (e DecryptionError) Error() string {
 //=============================================================================
 
 type ChainLinkPrevHashMismatchError struct {
-	err error
+	Msg string
 }
 
 func (e ChainLinkPrevHashMismatchError) Error() string {
-	return fmt.Sprintf("Chain link prev hash mismatch error: %s", e.err)
+	return fmt.Sprintf("Chain link prev hash mismatch error: %s", e.Msg)
 }
 
 //=============================================================================
 
 type ChainLinkWrongSeqnoError struct {
-	err error
+	Msg string
 }
 
 func (e ChainLinkWrongSeqnoError) Error() string {
-	return fmt.Sprintf("Chain link wrong seqno error: %s", e.err)
+	return fmt.Sprintf("Chain link wrong seqno error: %s", e.Msg)
 }
 
 //=============================================================================
@@ -1081,4 +1093,14 @@ type KeyVersionError struct{}
 
 func (k KeyVersionError) Error() string {
 	return "Invalid key version"
+}
+
+//=============================================================================
+
+type PIDFileLockError struct {
+	Filename string
+}
+
+func (e PIDFileLockError) Error() string {
+	return fmt.Sprintf("error locking %s: server already running", e.Filename)
 }
