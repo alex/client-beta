@@ -1,5 +1,7 @@
 #! /bin/bash
 
+set -e -u -o pipefail
+
 cd "$(dirname "$BASH_SOURCE")"
 
 # Always start fresh. Keeps things simple.
