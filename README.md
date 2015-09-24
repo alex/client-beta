@@ -14,6 +14,6 @@ Other issues can be submitted via [Issues](https://github.com/keybase/keybase-is
 
 On OSX, the supported way to build from source is to use `brew`:
 
-    brew --build-from-source keybase/beta/kbstage`
+    brew --build-from-source keybase/beta/kbstage
 
 On Linux, to build directly from this repo, use `./build.sh`.
