@@ -9,12 +9,11 @@ import (
 )
 
 type SigChain struct {
-	uid               keybase1.UID
-	username          NormalizedUsername
-	chainLinks        []*ChainLink
-	idVerified        bool
-	allKeys           bool
-	loadedFromLinkOne bool
+	uid        keybase1.UID
+	username   NormalizedUsername
+	chainLinks []*ChainLink
+	idVerified bool
+	allKeys    bool
 
 	// If we've locally delegated a key, it won't be reflected in our
 	// loaded chain, so we need to make a note of it here.
@@ -126,7 +125,6 @@ func (sc *SigChain) Bump(mt MerkleTriple) {
 
 func (sc *SigChain) LoadFromServer(t *MerkleTriple, selfUID keybase1.UID) (dirtyTail *MerkleTriple, err error) {
 	low := sc.GetLastLoadedSeqno()
-	sc.loadedFromLinkOne = (low == Seqno(0) || low == Seqno(-1))
 
 	G.Log.Debug("+ Load SigChain from server (uid=%s, low=%d)", sc.uid, low)
 	defer func() { G.Log.Debug("- Loaded SigChain -> %s", ErrToOk(err)) }()
@@ -196,13 +194,6 @@ func (sc *SigChain) LoadFromServer(t *MerkleTriple, selfUID keybase1.UID) (dirty
 	return
 }
 
-func (sc *SigChain) getFirstSeqno() (ret Seqno) {
-	if len(sc.chainLinks) > 0 {
-		ret = sc.chainLinks[0].GetSeqno()
-	}
-	return ret
-}
-
 func (sc *SigChain) VerifyChain() (err error) {
 	G.Log.Debug("+ SigChain::VerifyChain()")
 	defer func() {
@@ -219,11 +210,13 @@ func (sc *SigChain) VerifyChain() (err error) {
 		if i > 0 {
 			prev := sc.chainLinks[i-1]
 			if !prev.id.Eq(curr.GetPrev()) {
-				return ChainLinkPrevHashMismatchError{fmt.Sprintf("Chain mismatch at seqno=%d", curr.GetSeqno())}
+				return ChainLinkPrevHashMismatchError{fmt.Errorf("Chain mismatch at seqno=%d", curr.GetSeqno())}
 			}
 			if prev.GetSeqno()+1 != curr.GetSeqno() {
-				return ChainLinkWrongSeqnoError{fmt.Sprintf("Chain seqno mismatch at seqno=%d (previous=%d)", curr.GetSeqno(), prev.GetSeqno())}
+				return ChainLinkWrongSeqnoError{fmt.Errorf("Chain seqno mismatch at seqno=%d (previous=%d)", curr.GetSeqno(), prev.GetSeqno())}
 			}
+		} else if curr.GetSeqno() != 1 {
+			return ChainLinkWrongSeqnoError{fmt.Errorf("First seqno must be 1, not %d", curr.GetSeqno())}
 		}
 		if err = curr.CheckNameAndID(sc.username, sc.uid); err != nil {
 			return
@@ -459,13 +452,6 @@ func (sc *SigChain) VerifySigsAndComputeKeys(eldest keybase1.KID, ckf *ComputedK
 
 	if err = sc.VerifyChain(); err != nil {
 		return
-	}
-
-	if sc.allKeys || sc.loadedFromLinkOne {
-		if first := sc.getFirstSeqno(); first > Seqno(1) {
-			err = ChainLinkWrongSeqnoError{fmt.Sprintf("Wanted a chain from seqno=1, but got seqno=%d", first)}
-			return
-		}
 	}
 
 	if ckf.kf == nil || eldest.IsNil() {
@@ -776,6 +762,8 @@ func (l *SigChainLoader) VerifySigsAndComputeKeys() (err error) {
 	return
 }
 
+//========================================================================
+
 func (l *SigChainLoader) dbKey() DbKey {
 	return DbKeyUID(l.chainType.DbType, l.user.GetUID())
 }
@@ -792,8 +780,8 @@ func (l *SigChainLoader) StoreTail() (err error) {
 	return
 }
 
-// Store a SigChain to local storage as a result of having loaded it.
-// We eagerly write loaded chain links to storage if they verify properly.
+//========================================================================
+
 func (l *SigChainLoader) Store() (err error) {
 	err = l.StoreTail()
 	if err == nil {
@@ -802,9 +790,8 @@ func (l *SigChainLoader) Store() (err error) {
 	return
 }
 
-// Load is the main entry point into the SigChain loader.  It runs through
-// all of the steps to load a chain in from storage, to refresh it against
-// the server, and to verify its integrity.
+//========================================================================
+
 func (l *SigChainLoader) Load() (ret *SigChain, err error) {
 	var current bool
 	var preload bool

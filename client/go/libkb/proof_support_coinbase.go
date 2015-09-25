@@ -26,10 +26,10 @@ func (rc *CoinbaseChecker) ProfileURL() string {
 
 func (rc *CoinbaseChecker) CheckHint(h SigHint) ProofError {
 	wanted := rc.ProfileURL()
-	if strings.ToLower(wanted) == strings.ToLower(h.apiURL) {
+	if wanted == strings.ToLower(h.apiURL) {
 		return nil
 	}
-	return NewProofError(keybase1.ProofStatus_BAD_API_URL, "Bad hint from server; URL should be %q; got %q", wanted, h.apiURL)
+	return NewProofError(keybase1.ProofStatus_BAD_API_URL, "Bad hint from server; URL should be %q", wanted)
 }
 
 func (rc *CoinbaseChecker) CheckStatus(h SigHint) ProofError {

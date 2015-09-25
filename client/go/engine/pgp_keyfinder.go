@@ -103,11 +103,8 @@ func (e *PGPKeyfinder) trackUsers(ctx *Context) {
 	// need to track any users we aren't tracking
 	for _, u := range e.arg.Users {
 		if err := e.trackUser(ctx, u); err != nil {
-			// ignore self track errors
-			if _, ok := err.(libkb.SelfTrackError); !ok {
-				e.runerr = err
-				return
-			}
+			e.runerr = err
+			return
 		}
 	}
 }

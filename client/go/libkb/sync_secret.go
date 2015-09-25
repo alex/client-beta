@@ -4,7 +4,6 @@ package libkb
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	keybase1 "github.com/keybase/client/protocol/go"
@@ -26,22 +25,10 @@ type DeviceKey struct {
 	Type          string               `json:"type"`
 	CTime         int64                `json:"ctime"`
 	MTime         int64                `json:"mtime"`
-	Description   string               `json:"name"`
+	Description   string               `json:"description"`
 	Status        int                  `json:"status"`
 	LksServerHalf string               `json:"lks_server_half"`
 	PPGen         PassphraseGeneration `json:"passphrase_generation"`
-}
-
-func (d DeviceKey) Display() string {
-	if d.Type == DeviceTypePaper {
-		// XXX not sure if we need to support our existing paper keys, but without this
-		// someone is surely going to complain:
-		if strings.HasPrefix(d.Description, "Paper Key") {
-			return d.Description
-		}
-		return fmt.Sprintf("Paper Key (%s...)", d.Description)
-	}
-	return d.Description
 }
 
 type DeviceKeyMap map[keybase1.DeviceID]DeviceKey
@@ -182,11 +169,11 @@ func (k *ServerPrivateKey) FindActiveKey(ckf *ComputedKeyFamily) (ret *SKB, err 
 
 func (ss *SecretSyncer) FindDevice(id keybase1.DeviceID) (DeviceKey, error) {
 	if ss.keys == nil {
-		return DeviceKey{}, fmt.Errorf("SecretSyncer: no device found for ID = %s", id)
+		return DeviceKey{}, fmt.Errorf("No device found for ID = %s", id)
 	}
 	dev, ok := ss.keys.Devices[id]
 	if !ok {
-		return DeviceKey{}, fmt.Errorf("SecretSyncer: no device found for ID = %s", id)
+		return DeviceKey{}, fmt.Errorf("No device found for ID = %s", id)
 	}
 	return dev, nil
 }

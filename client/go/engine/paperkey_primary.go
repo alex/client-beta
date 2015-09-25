@@ -50,7 +50,7 @@ func (e *PaperKeyPrimary) RequiredUIs() []libkb.UIKind {
 
 // SubConsumers returns the other UI consumers for this engine.
 func (e *PaperKeyPrimary) SubConsumers() []libkb.UIConsumer {
-	return []libkb.UIConsumer{&PaperKeyGen{}}
+	return nil
 }
 
 // Run starts the engine.

@@ -1,7 +1,6 @@
 package libkb
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -21,6 +20,7 @@ type Session struct {
 	csrf     string
 	inFile   bool
 	loaded   bool
+	checked  bool
 	deviceID keybase1.DeviceID
 	valid    bool
 	uid      keybase1.UID
@@ -59,7 +59,6 @@ func (s *Session) IsLoggedInAndProvisioned() bool {
 	if s.deviceID != envid {
 		return false
 	}
-
 	return true
 }
 
@@ -104,12 +103,14 @@ func (s *Session) SetLoggedIn(sessionID, csrfToken string, username NormalizedUs
 	s.GetDictionary().SetKey("session", jsonw.NewString(sessionID))
 
 	s.SetCsrf(csrfToken)
-	return s.save()
+	s.SetDirty()
+
+	return nil
 }
 
-func (s *Session) save() error {
+func (s *Session) SetDirty() {
+	s.file.dirty = true
 	s.GetDictionary().SetKey("mtime", jsonw.NewInt64(time.Now().Unix()))
-	return s.file.Save(true, 0)
 }
 
 func (s *Session) SetCsrf(t string) {
@@ -118,16 +119,17 @@ func (s *Session) SetCsrf(t string) {
 		return
 	}
 	s.GetDictionary().SetKey("csrf", jsonw.NewString(t))
+	s.SetDirty()
 }
 
-func (s *Session) SetDeviceProvisioned(devid keybase1.DeviceID) error {
+func (s *Session) SetDeviceProvisioned(devid keybase1.DeviceID) {
 	s.G().Log.Debug("Local Session:  setting provisioned device id: %s", devid)
 	s.deviceID = devid
 	if s.file == nil {
-		return errors.New("no session file")
+		return
 	}
 	s.GetDictionary().SetKey("device_provisioned", jsonw.NewString(devid.String()))
-	return s.save()
+	s.SetDirty()
 }
 
 func (s *Session) isConfigLoggedIn() bool {
@@ -188,13 +190,14 @@ func (s *Session) Load() error {
 		var did keybase1.DeviceID
 		s.file.jw.AtKey("device_provisioned").GetStringVoid(&devid, &tmp)
 		if tmp != nil {
-			s.G().Log.Debug("Bad 'device_provisioned' value in session file %s: %s", s.file.filename, tmp)
+			s.G().Log.Warning("Bad 'device_provisioned' value in session file %s: %s",
+				s.file.filename, tmp)
 			ok = false
 		} else {
 			var err error
 			did, err = keybase1.DeviceIDFromString(devid)
 			if err != nil {
-				s.G().Log.Debug("Bad 'device_provisioned' value in session file %s: %s (%s)", s.file.filename, err, devid)
+				s.G().Log.Warning("Bad 'device_provisioned' value in session file %s: %s (%s)", s.file.filename, err, devid)
 				ok = false
 
 			}
@@ -216,6 +219,10 @@ func (s *Session) GetDictionary() *jsonw.Wrapper {
 	return s.file.jw
 }
 
+func (s *Session) Write() error {
+	return s.file.MaybeSave(true, 0)
+}
+
 func (s *Session) IsRecent() bool {
 	if s.mtime == 0 {
 		return false
@@ -224,11 +231,10 @@ func (s *Session) IsRecent() bool {
 	return time.Since(t) < time.Hour
 }
 
-func (s *Session) check() error {
+func (s *Session) Check() error {
 	s.G().Log.Debug("+ Checking session")
-	if s.IsRecent() {
-		s.G().Log.Debug("- session is recent, short-circuiting")
-		s.valid = true
+	if s.checked {
+		s.G().Log.Debug("- already checked, short-circuting")
 		return nil
 	}
 
@@ -242,6 +248,8 @@ func (s *Session) check() error {
 	if err != nil {
 		return err
 	}
+
+	s.checked = true
 
 	if res.AppStatus == "OK" {
 		s.G().Log.Debug("| Stored session checked out")
@@ -259,9 +267,8 @@ func (s *Session) check() error {
 		s.uid = uid
 		nu := NewNormalizedUsername(username)
 		s.username = &nu
-		s.SetCsrf(csrf)
-		if err = s.save(); err != nil {
-			return err
+		if !s.IsRecent() {
+			s.SetCsrf(csrf)
 		}
 	} else {
 		s.G().Log.Notice("Stored session expired")
@@ -289,7 +296,7 @@ func (s *Session) postLogout() error {
 	})
 	if err == nil {
 		s.valid = false
-		s.mtime = 0
+		s.checked = false
 		s.token = ""
 		s.csrf = ""
 	}
@@ -318,7 +325,7 @@ func (s *Session) loadAndCheck() (bool, error) {
 		return false, err
 	}
 	if s.HasSessionToken() {
-		err = s.check()
+		err = s.Check()
 	}
 	return s.IsValid(), err
 }

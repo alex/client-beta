@@ -9,8 +9,8 @@ import (
 	jsonw "github.com/keybase/go-jsonw"
 )
 
-type KexProvisioner struct {
-	KexCommon
+type KexSib struct {
+	KexCom
 	secretPhrase string
 	engctx       *Context
 	deviceSibkey libkb.GenericKey
@@ -19,36 +19,36 @@ type KexProvisioner struct {
 	sec          *kex.Secret
 }
 
-// NewKexProvisioner creates a sibkey add engine.
+// NewKexSib creates a sibkey add engine.
 // This runs on device X to provision device Y in forward kex.
 // The secretPhrase is needed before this engine can run because
 // the weak id used in receive() is based on it.
-func NewKexProvisioner(g *libkb.GlobalContext, secretPhrase string) *KexProvisioner {
-	kc := newKexCommon(g)
-	return &KexProvisioner{
-		KexCommon:    *kc,
+func NewKexSib(g *libkb.GlobalContext, secretPhrase string) *KexSib {
+	kc := newKexCom(g)
+	return &KexSib{
+		KexCom:       *kc,
 		secretPhrase: secretPhrase,
 	}
 }
 
-func (k *KexProvisioner) Name() string {
-	return "KexProvisioner"
+func (k *KexSib) Name() string {
+	return "KexSib"
 }
 
-func (k *KexProvisioner) Prereqs() Prereqs {
-	return Prereqs{Device: true}
+func (k *KexSib) Prereqs() Prereqs {
+	return Prereqs{Session: true}
 }
 
-func (k *KexProvisioner) RequiredUIs() []libkb.UIKind {
+func (k *KexSib) RequiredUIs() []libkb.UIKind {
 	return []libkb.UIKind{libkb.SecretUIKind, libkb.LocksmithUIKind}
 }
 
-func (k *KexProvisioner) SubConsumers() []libkb.UIConsumer {
+func (k *KexSib) SubConsumers() []libkb.UIConsumer {
 	return nil
 }
 
 // Run starts the engine.
-func (k *KexProvisioner) Run(ctx *Context) error {
+func (k *KexSib) Run(ctx *Context) error {
 	k.engctx = ctx
 
 	var err error
@@ -61,8 +61,7 @@ func (k *KexProvisioner) Run(ctx *Context) error {
 
 	dp := k.G().Env.GetDeviceID()
 	if dp.IsNil() {
-		// Prereqs w/ Device: true should catch this earlier, but just in case:
-		return libkb.DeviceRequiredError{}
+		return libkb.ErrNoDevice
 	}
 	k.deviceID = dp
 	k.G().Log.Debug("device id: %s", k.deviceID)
@@ -73,7 +72,7 @@ func (k *KexProvisioner) Run(ctx *Context) error {
 
 	k.deviceSibkey, err = k.user.GetComputedKeyFamily().GetSibkeyForDevice(k.deviceID)
 	if err != nil {
-		k.G().Log.Warning("KexProvisioner.Run: error getting device sibkey: %s", err)
+		k.G().Log.Warning("KexSib.Run: error getting device sibkey: %s", err)
 		return err
 	}
 
@@ -93,11 +92,11 @@ func (k *KexProvisioner) Run(ctx *Context) error {
 	}
 	k.sigKey, _, err = k.G().Keyrings.GetSecretKeyWithPrompt(ctx.LoginContext, arg, ctx.SecretUI, "new device install")
 	if err != nil {
-		k.G().Log.Warning("KexProvisioner.Run: GetSecretKey error: %s", err)
+		k.G().Log.Warning("KexSib.Run: GetSecretKey error: %s", err)
 		return err
 	}
 
-	k.G().Log.Debug("KexProvisioner: starting receive loop")
+	k.G().Log.Debug("KexSib: starting receive loop")
 	var nilDeviceID keybase1.DeviceID
 	m := kex.NewMeta(k.user.GetUID(), k.sec.StrongID(), nilDeviceID, k.deviceID, kex.DirectionYtoX)
 	err = k.loopReceives(ctx, m, k.sec)
@@ -107,25 +106,25 @@ func (k *KexProvisioner) Run(ctx *Context) error {
 	return err
 }
 
-func (k *KexProvisioner) Cancel() error {
+func (k *KexSib) Cancel() error {
 	var nilDeviceID keybase1.DeviceID
 	m := kex.NewMeta(k.user.GetUID(), k.sec.StrongID(), nilDeviceID, k.deviceID, kex.DirectionYtoX)
 	return k.cancel(m)
 }
 
-func (k *KexProvisioner) loopReceives(ctx *Context, m *kex.Meta, sec *kex.Secret) error {
+func (k *KexSib) loopReceives(ctx *Context, m *kex.Meta, sec *kex.Secret) error {
 	// start receive loop
 	k.poll(ctx, m, sec)
 
 	// wait for StartKex() from Y
 	k.kexStatus(ctx, "waiting for StartKex from Y", keybase1.KexStatusCode_START_WAIT)
 	if err := k.next(ctx, kex.StartKexMsg, kex.StartTimeout, k.handleStart); err != nil {
-		if _, ok := err.(libkb.TimeoutError); !ok {
+		if err != libkb.ErrTimeout {
 			return err
 		}
 		// a timeout error while waiting for StartKex most likely means that the
 		// secret phrase the user entered is invalid.
-		return libkb.InvalidKexPhraseError{}
+		return libkb.ErrInvalidKexPhrase
 	}
 	k.kexStatus(ctx, "received StartKex from Y", keybase1.KexStatusCode_START_RECEIVED)
 
@@ -154,19 +153,19 @@ func (k *KexProvisioner) loopReceives(ctx *Context, m *kex.Meta, sec *kex.Secret
 		return err
 	}
 
-	k.G().Log.Debug("KexProvisioner: finished with messages, waiting for receive to end.")
+	k.G().Log.Debug("KexSib: finished with messages, waiting for receive to end.")
 	k.wg.Wait()
-	k.G().Log.Debug("KexProvisioner: done.")
+	k.G().Log.Debug("KexSib: done.")
 	k.kexStatus(ctx, "kexsib complete on existing device X ", keybase1.KexStatusCode_END)
 	return nil
 }
 
-func (k *KexProvisioner) handleStart(ctx *Context, m *kex.Msg) error {
+func (k *KexSib) handleStart(ctx *Context, m *kex.Msg) error {
 	k.devidY = m.Sender
 	return nil
 }
 
-func (k *KexProvisioner) verifyPleaseSign(jw *jsonw.Wrapper, newKID keybase1.KID) (err error) {
+func (k *KexSib) verifyPleaseSign(jw *jsonw.Wrapper, newKID keybase1.KID) (err error) {
 	jw.AssertEqAtPath("body.key.kid", k.sigKey.GetKID().ToJsonw(), &err)
 	jw.AssertEqAtPath("body.key.uid", libkb.UIDWrapper(k.user.GetUID()), &err)
 	jw.AssertEqAtPath("body.key.eldest_kid", k.user.GetEldestKID().ToJsonw(), &err)
@@ -176,7 +175,7 @@ func (k *KexProvisioner) verifyPleaseSign(jw *jsonw.Wrapper, newKID keybase1.KID
 	return err
 }
 
-func (k *KexProvisioner) handlePleaseSign(ctx *Context, m *kex.Msg) error {
+func (k *KexSib) handlePleaseSign(ctx *Context, m *kex.Msg) error {
 	eddsa := m.Args().SigningKey
 	sig := m.Args().Sig
 

@@ -12,8 +12,9 @@ import (
 
 func NewCmdPGPVerify(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:  "verify",
-		Usage: "PGP verify message or file signatures for keybase users",
+		Name:        "verify",
+		Usage:       "keybase pgp verify",
+		Description: "PGP verify message or file signatures for keybase users.",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdPGPVerify{}, "verify", c)
 		},
@@ -62,7 +63,8 @@ func (c *CmdPGPVerify) Run() error {
 	protocols := []rpc2.Protocol{
 		NewStreamUIProtocol(),
 		NewSecretUIProtocol(),
-		NewIdentifyTrackUIProtocol(),
+		NewIdentifyUIProtocol(),
+		NewLogUIProtocol(),
 	}
 	if err := RegisterProtocols(protocols); err != nil {
 		return err

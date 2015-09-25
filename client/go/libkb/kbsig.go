@@ -362,12 +362,7 @@ func (u *User) KeyProof(arg Delegator) (ret *jsonw.Wrapper, err error) {
 	if arg.Device != nil {
 		device := *arg.Device
 		device.Kid = arg.NewKey.GetKID()
-		var dw *jsonw.Wrapper
-		dw, err = device.Export(LinkType(arg.DelegationType))
-		if err != nil {
-			return nil, err
-		}
-		body.SetKey("device", dw)
+		body.SetKey("device", device.Export())
 	}
 
 	if kp != nil {

@@ -4,13 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"fmt"
+	"github.com/ThomasRooney/gexpect"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"testing"
-
-	"github.com/ThomasRooney/gexpect"
 )
 
 // compileBinary compiles the keybase main binary via `go install`.  It installs
@@ -140,7 +139,7 @@ func (c expectCmd) close() {
 // TestVersion tests the trivial version subcommand
 func TestVersion(t *testing.T) {
 	u := newUser(t)
-	cmd := u.newExpectCmd(t, "version -f v")
+	cmd := u.newExpectCmd(t, "version -v")
 	cmd.expect(t, "Keybase")
 	cmd.expect(t, "- Visit https://keybase.io for more details")
 	cmd.interact()

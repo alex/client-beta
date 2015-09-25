@@ -5,6 +5,7 @@ import (
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
 	keybase1 "github.com/keybase/client/protocol/go"
+	"github.com/maxtaco/go-framed-msgpack-rpc/rpc2"
 )
 
 type CmdPGPPull struct {
@@ -22,7 +23,10 @@ func (v *CmdPGPPull) Run() (err error) {
 		return err
 	}
 
-	if err = RegisterProtocols(nil); err != nil {
+	protocols := []rpc2.Protocol{
+		NewLogUIProtocol(),
+	}
+	if err = RegisterProtocols(protocols); err != nil {
 		return err
 	}
 
@@ -33,10 +37,10 @@ func (v *CmdPGPPull) Run() (err error) {
 
 func NewCmdPGPPull(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:         "pull",
-		ArgumentHelp: "<usernames...>",
-		Usage:        "Download the latest PGP keys for people you track.",
-		Flags:        []cli.Flag{},
+		Name:        "pull",
+		Usage:       "keybase pgp pull",
+		Description: "Download the latest PGP keys for people you track.",
+		Flags:       []cli.Flag{},
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdPGPPull{}, "pull", c)
 		},

@@ -82,7 +82,6 @@ func (pi *pinentryInstance) shouldStoreSecret(info pinentrySecretStoreInfo) bool
 	return (kc.FindAndRemoveGenericPassword(&attributes) == nil)
 }
 
-func HasWindows() bool {
-	// We aren't in an ssh connection, so we can probably spawn a window.
-	return len(os.Getenv("SSH_CONNECTION")) == 0
+func IsRemote() bool {
+	return len(os.Getenv("SSH_CONNECTION")) > 0
 }

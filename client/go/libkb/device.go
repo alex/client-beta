@@ -1,6 +1,8 @@
 package libkb
 
 import (
+	"fmt"
+
 	keybase1 "github.com/keybase/client/protocol/go"
 	jsonw "github.com/keybase/go-jsonw"
 )
@@ -28,10 +30,10 @@ type DeviceStatus struct {
 
 type Device struct {
 	ID          keybase1.DeviceID `json:"id"`
-	Kid         keybase1.KID      `json:"kid,omitempty"`
-	Description *string           `json:"name,omitempty"`
-	Status      *int              `json:"status,omitempty"`
 	Type        string            `json:"type"`
+	Kid         keybase1.KID      `json:"kid,omitempty"`
+	Description *string           `json:"description,omitempty"`
+	Status      *int              `json:"status,omitempty"`
 }
 
 // NewPaperDevice creates a new paper backup key device
@@ -41,7 +43,7 @@ func NewPaperDevice(passphrasePrefix string) (*Device, error) {
 		return nil, err
 	}
 	s := DeviceStatusActive
-	desc := passphrasePrefix
+	desc := fmt.Sprintf("Paper Key (%s...)", passphrasePrefix)
 
 	d := &Device{
 		ID:          did,
@@ -73,23 +75,8 @@ func (d *Device) Merge(d2 *Device) {
 	}
 }
 
-func (d *Device) Export(lt LinkType) (*jsonw.Wrapper, error) {
-	dw, err := jsonw.NewObjectWrapper(d)
-	if err != nil {
-		return nil, err
-	}
-
-	if lt == SubkeyType {
-		// subkeys shouldn't have name or type
-		if err := dw.DeleteKey("name"); err != nil {
-			return nil, err
-		}
-		if err := dw.DeleteKey("type"); err != nil {
-			return nil, err
-		}
-	}
-
-	return dw, nil
+func (d *Device) Export() *jsonw.Wrapper {
+	return jsonw.NewWrapper(d)
 }
 
 func (d *Device) ProtExport() *keybase1.Device {

@@ -22,7 +22,6 @@ protocol config {
 		string gpgPath;
 		string version;
 		string path;
-		string configPath;
 	}
 
 	Config getConfig(int sessionID);

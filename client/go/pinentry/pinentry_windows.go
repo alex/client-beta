@@ -2,7 +2,6 @@
 
 package pinentry
 
-func HasWindows() bool {
-	// We're assuming you aren't using windows remotely.
-	return true
+func IsRemote() bool {
+	return false
 }

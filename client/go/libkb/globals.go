@@ -50,7 +50,7 @@ type GlobalContext struct {
 	IdentifyCache    *IdentifyCache    // cache of IdentifyOutcomes
 	UI               UI                // Interact with the UI
 	Service          bool              // whether we're in server mode
-	shutdownOnce     sync.Once         // whether we've shut down or not
+	shutdown         bool              // whether we've shut down or not
 	loginStateMu     sync.RWMutex      // protects loginState pointer, which gets destroyed on logout
 	loginState       *LoginState       // What phase of login the user's in
 }
@@ -143,7 +143,20 @@ func (g *GlobalContext) ConfigureConfig() error {
 	return nil
 }
 
+func (g *GlobalContext) writeConfig() error {
+	cw := g.Env.GetConfigWriter()
+	if cw != nil {
+		return cw.Write()
+	}
+	return nil
+}
+
 func (g *GlobalContext) ConfigReload() error {
+	// write the existing config just to be safe
+	if err := g.writeConfig(); err != nil {
+		return err
+	}
+
 	return g.ConfigureConfig()
 }
 
@@ -157,14 +170,14 @@ func (g *GlobalContext) ConfigureKeyring() error {
 	return nil
 }
 
-func VersionMessage(linefn func(string)) {
-	linefn(fmt.Sprintf("Keybase CLI %s", VersionString()))
+func VersionMessage(devel bool, linefn func(string)) {
+	linefn(fmt.Sprintf("Keybase CLI %s", VersionString(devel)))
 	linefn(fmt.Sprintf("- Built with %s", runtime.Version()))
 	linefn("- Visit https://keybase.io for more details")
 }
 
 func (g *GlobalContext) StartupMessage() {
-	VersionMessage(func(s string) { g.Log.Debug(s) })
+	VersionMessage(false, func(s string) { g.Log.Debug(s) })
 }
 
 func (g *GlobalContext) ConfigureAPI() error {
@@ -200,48 +213,35 @@ func (g *GlobalContext) ConfigureExportedStreams() error {
 	return nil
 }
 
-// Shutdown is called exactly once per-process and does whatever
-// cleanup is necessary to shut down the server.
 func (g *GlobalContext) Shutdown() error {
-	var err error
-	didShutdown := false
-
-	// Wrap in a Once.Do so that we don't inadvertedly
-	// run this code twice.
-	g.shutdownOnce.Do(func() {
-		G.Log.Debug("Calling shutdown first time through")
-		didShutdown = true
-
-		epick := FirstErrorPicker{}
-
-		if g.UI != nil {
-			epick.Push(g.UI.Shutdown())
-		}
-		if g.LocalDb != nil {
-			epick.Push(g.LocalDb.Close())
-		}
-		if g.LoginState() != nil {
-			epick.Push(g.LoginState().Shutdown())
-		}
-
-		if g.IdentifyCache != nil {
-			g.IdentifyCache.Shutdown()
-		}
-
-		for _, hook := range g.ShutdownHooks {
-			epick.Push(hook())
-		}
-
-		err = epick.Error()
-	})
-
-	// Make a little bit of a statement if we wind up here a second time
-	// (which is a bug).
-	if !didShutdown {
-		G.Log.Debug("Skipped shutdown on second call")
+	if g.shutdown {
+		return nil
 	}
 
-	return err
+	epick := FirstErrorPicker{}
+
+	if g.UI != nil {
+		epick.Push(g.UI.Shutdown())
+	}
+	if g.LocalDb != nil {
+		epick.Push(g.LocalDb.Close())
+	}
+	if g.LoginState() != nil {
+		epick.Push(g.LoginState().Shutdown())
+	}
+
+	if g.IdentifyCache != nil {
+		g.IdentifyCache.Shutdown()
+	}
+
+	for _, hook := range g.ShutdownHooks {
+		epick.Push(hook())
+	}
+
+	epick.Push(g.writeConfig())
+
+	g.shutdown = true
+	return epick.Error()
 }
 
 func (u Usage) UseKeyring() bool {
@@ -249,17 +249,13 @@ func (u Usage) UseKeyring() bool {
 }
 
 func (g *GlobalContext) ConfigureAll(line CommandLine, cmd Command) error {
+	var err error
 
 	g.SetCommandLine(line)
 
 	g.ConfigureLogging()
 
 	usage := cmd.GetUsage()
-	return g.ConfigureUsage(usage)
-}
-
-func (g *GlobalContext) ConfigureUsage(usage Usage) error {
-	var err error
 
 	if usage.Config {
 		if err = g.ConfigureConfig(); err != nil {
@@ -303,6 +299,7 @@ func (g *GlobalContext) ConfigureUsage(usage Usage) error {
 		return err
 	}
 
+	G.StartupMessage()
 	return nil
 }
 

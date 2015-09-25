@@ -33,7 +33,7 @@ func (e *PaperKey) Name() string {
 // GetPrereqs returns the engine prereqs.
 func (e *PaperKey) Prereqs() Prereqs {
 	return Prereqs{
-		Device: true,
+		Session: true,
 	}
 }
 

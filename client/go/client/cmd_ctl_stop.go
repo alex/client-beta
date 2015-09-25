@@ -8,8 +8,9 @@ import (
 
 func NewCmdCtlStop(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:  "stop",
-		Usage: "Stop the background keybase service",
+		Name:        "stop",
+		Usage:       "keybase ctl stop",
+		Description: "Stop the background keybase service.",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdCtlStop{}, "stop", c)
 			cl.SetForkCmd(libcmdline.NoFork)
@@ -29,7 +30,7 @@ func (s *CmdCtlStop) Run() (err error) {
 	if err != nil {
 		return err
 	}
-	return cli.Stop(0)
+	return cli.Stop()
 }
 
 func (s *CmdCtlStop) GetUsage() libkb.Usage {

@@ -7,6 +7,7 @@ import (
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
 	keybase1 "github.com/keybase/client/protocol/go"
+	"github.com/maxtaco/go-framed-msgpack-rpc/rpc2"
 )
 
 // CmdDeviceList is the 'device list' command.  It displays all
@@ -18,8 +19,9 @@ type CmdDeviceList struct {
 // NewCmdDeviceList creates a new cli.Command.
 func NewCmdDeviceList(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:  "list",
-		Usage: "List devices",
+		Name:        "list",
+		Usage:       "keybase device list",
+		Description: "List devices.",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdDeviceList{}, "list", c)
 		},
@@ -32,7 +34,10 @@ func (c *CmdDeviceList) Run() error {
 	if err != nil {
 		return err
 	}
-	if err := RegisterProtocols(nil); err != nil {
+	protocols := []rpc2.Protocol{
+		NewLogUIProtocol(),
+	}
+	if err := RegisterProtocols(protocols); err != nil {
 		return err
 	}
 

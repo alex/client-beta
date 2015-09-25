@@ -9,6 +9,7 @@ import (
 	"github.com/keybase/client/go/libkb"
 	keybase1 "github.com/keybase/client/protocol/go"
 	jsonw "github.com/keybase/go-jsonw"
+	"github.com/maxtaco/go-framed-msgpack-rpc/rpc2"
 )
 
 type CmdSearch struct {
@@ -31,7 +32,10 @@ func (c *CmdSearch) Run() (err error) {
 		return err
 	}
 
-	if err = RegisterProtocols(nil); err != nil {
+	protocols := []rpc2.Protocol{
+		NewLogUIProtocol(),
+	}
+	if err = RegisterProtocols(protocols); err != nil {
 		return err
 	}
 
@@ -100,21 +104,18 @@ func (c *CmdSearch) showJSONResults(results []keybase1.UserSummary) error {
 		for _, social := range user.Proofs.Social {
 			userBlob.SetKey(social.ProofType, jsonw.NewString(social.ProofName))
 		}
-
 		if len(user.Proofs.Web) > 0 {
-			var webProofs []string
+			websites := jsonw.NewArray(len(user.Proofs.Web))
+			webIndex := 0
+			userBlob.SetKey("websites", websites)
 			for _, webProof := range user.Proofs.Web {
 				for _, protocol := range webProof.Protocols {
-					webProofs = append(webProofs, libkb.MakeURI(protocol, webProof.Hostname))
+					websites.SetIndex(webIndex, jsonw.NewString(
+						fmt.Sprintf("%s://%s", protocol, webProof.Hostname)))
+					webIndex++
 				}
 			}
-			websites := jsonw.NewArray(len(webProofs))
-			for i, wp := range webProofs {
-				websites.SetIndex(i, jsonw.NewString(wp))
-			}
-			userBlob.SetKey("websites", websites)
 		}
-
 		output.SetIndex(userIndex, userBlob)
 	}
 	GlobUI.Println(output.MarshalPretty())
@@ -123,9 +124,9 @@ func (c *CmdSearch) showJSONResults(results []keybase1.UserSummary) error {
 
 func NewCmdSearch(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:         "search",
-		ArgumentHelp: "<query>",
-		Usage:        "Search for keybase users",
+		Name:        "search",
+		Usage:       "keybase search <query>",
+		Description: "Search for keybase users.",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "j, json",

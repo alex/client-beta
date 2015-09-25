@@ -1,4 +1,4 @@
-Name: @@NAME@@
+Name: keybase
 Version: @@VERSION@@
 Release: 1
 Summary: Keybase command line client

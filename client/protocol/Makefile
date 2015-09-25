@@ -17,7 +17,6 @@ build-stamp: \
 	json/config.json \
 	json/crypto.json \
 	json/ctl.json \
-	json/debugging.json \
 	json/device.json \
 	json/doctor.json \
 	json/doctor_ui.json \
@@ -57,14 +56,10 @@ objc-build-stamp: build-stamp
 	ruby ./bin/objc.rb
 	date > $@
 
-js/keybase_v1.js: build-stamp
-	@mkdir -p js/
-	node ./bin/js.js
-
 clean:
-	rm -rf json/*.json go/keybase_v1.go objc/* js/keybase_v1.js
+	rm -rf json/*.json go/keybase_v1.go objc/*
 
-build: build-stamp go/keybase_v1.go objc-build-stamp js/keybase_v1.js
+build: build-stamp go/keybase_v1.go objc-build-stamp
 
 .PHONY: test setup config
 

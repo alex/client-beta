@@ -1,7 +1,6 @@
 package libcmdline
 
 import (
-	"io"
 	"regexp"
 	"strings"
 
@@ -77,8 +76,14 @@ func (p CommandLine) GetPGPFingerprint() *libkb.PGPFingerprint {
 func (p CommandLine) GetProxy() string {
 	return p.GetGString("proxy")
 }
+func (p CommandLine) GetUsername() libkb.NormalizedUsername {
+	return libkb.NewNormalizedUsername(p.GetGString("username"))
+}
 func (p CommandLine) GetLogFormat() string {
 	return p.GetGString("log-format")
+}
+func (p CommandLine) GetLabel() string {
+	return p.GetGString("label")
 }
 func (p CommandLine) GetGpgHome() string {
 	return p.GetGString("gpg-home")
@@ -94,9 +99,6 @@ func (p CommandLine) GetPinentry() string {
 }
 func (p CommandLine) GetGString(s string) string {
 	return p.ctx.GlobalString(s)
-}
-func (p CommandLine) GetString(s string) string {
-	return p.ctx.String(s)
 }
 func (p CommandLine) GetGInt(s string) int {
 	return p.ctx.GlobalInt(s)
@@ -212,7 +214,7 @@ func NewCommandLine(addHelp bool, extraFlags []cli.Flag) *CommandLine {
 func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 	app := p.app
 	app.Name = "keybase"
-	app.Version = libkb.VersionString()
+	app.Version = libkb.Version
 	app.Usage = "Keybase command line client."
 
 	app.Flags = []cli.Flag{
@@ -239,6 +241,10 @@ func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 		cli.StringFlag{
 			Name:  "api-uri-path-prefix",
 			Usage: "Specify an alternate API URI path prefix.",
+		},
+		cli.StringFlag{
+			Name:  "username, u",
+			Usage: "Specify Keybase username of the current user.",
 		},
 		cli.StringFlag{
 			Name:  "pinentry",
@@ -271,6 +277,10 @@ func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 		cli.StringFlag{
 			Name:  "log-format",
 			Usage: "Log format (default, plain, file, fancy).",
+		},
+		cli.StringFlag{
+			Name:  "label",
+			Usage: "Specifying a label can help identify services.",
 		},
 		cli.StringFlag{
 			Name:  "pgpdir, gpgdir",
@@ -320,15 +330,19 @@ func (p *CommandLine) PopulateApp(addHelp bool, extraFlags []cli.Flag) {
 			Name:  "split-log-output",
 			Usage: "Output service log messages to current terminal.",
 		},
-		cli.StringFlag{
-			Name:  "timers",
-			Usage: "Specify 'a' for API; 'r' for RPCs; and 'x' for eXternal API calls",
-		},
 	}
 	if extraFlags != nil {
 		app.Flags = append(app.Flags, extraFlags...)
 	}
 
+	// Finally, add help if we asked for it
+	if addHelp {
+		app.Action = func(c *cli.Context) {
+			p.cmd = &CmdGeneralHelp{CmdBaseHelp{c}}
+			p.ctx = c
+			p.name = "help"
+		}
+	}
 	app.Commands = []cli.Command{}
 }
 
@@ -394,14 +408,4 @@ func (p *CommandLine) Parse(args []string) (cmd Command, err error) {
 	}
 
 	return
-}
-
-func (p *CommandLine) SetOutputWriter(w io.Writer) {
-	p.app.Writer = w
-}
-
-// AddHelpTopics appends topics to the list of help topics for
-// this app.
-func (p *CommandLine) AddHelpTopics(topics []cli.HelpTopic) {
-	p.app.HelpTopics = append(p.app.HelpTopics, topics...)
 }

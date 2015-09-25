@@ -109,9 +109,6 @@
       "name" : "deviceDescription",
       "type" : "string"
     }, {
-      "name" : "deviceType",
-      "type" : "string"
-    }, {
       "name" : "cTime",
       "type" : "Time"
     }, {
@@ -207,18 +204,12 @@
         "name" : "sid",
         "type" : "string"
       } ],
-      "response" : "int"
+      "response" : "null"
     },
     "putMetadata" : {
       "request" : [ {
         "name" : "mdBlock",
         "type" : "bytes"
-      }, {
-        "name" : "logTags",
-        "type" : {
-          "type" : "map",
-          "values" : "string"
-        }
       } ],
       "response" : "null"
     },
@@ -238,12 +229,6 @@
       }, {
         "name" : "stopRevision",
         "type" : "long"
-      }, {
-        "name" : "logTags",
-        "type" : {
-          "type" : "map",
-          "values" : "string"
-        }
       } ],
       "response" : "MetadataResponse"
     },
@@ -254,12 +239,6 @@
       }, {
         "name" : "currRevision",
         "type" : "long"
-      }, {
-        "name" : "logTags",
-        "type" : {
-          "type" : "map",
-          "values" : "string"
-        }
       } ],
       "response" : "null"
     },
@@ -267,12 +246,6 @@
       "request" : [ {
         "name" : "folderID",
         "type" : "string"
-      }, {
-        "name" : "logTags",
-        "type" : {
-          "type" : "map",
-          "values" : "string"
-        }
       } ],
       "response" : "null"
     },
@@ -283,12 +256,6 @@
           "type" : "array",
           "items" : "KeyHalf"
         }
-      }, {
-        "name" : "logTags",
-        "type" : {
-          "type" : "map",
-          "values" : "string"
-        }
       } ],
       "response" : "null"
     },
@@ -296,12 +263,6 @@
       "request" : [ {
         "name" : "keyHalfID",
         "type" : "bytes"
-      }, {
-        "name" : "logTags",
-        "type" : {
-          "type" : "map",
-          "values" : "string"
-        }
       } ],
       "response" : "bytes"
     },
@@ -318,10 +279,6 @@
         "type" : "string"
       } ],
       "response" : "boolean"
-    },
-    "ping" : {
-      "request" : [ ],
-      "response" : "null"
     }
   }
 }

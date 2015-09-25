@@ -9,7 +9,6 @@ import (
 
 type Prereqs struct {
 	Session bool
-	Device  bool
 }
 
 type Engine interface {
@@ -34,18 +33,6 @@ func runPrereqs(e Engine, ctx *Context) (err error) {
 			err = libkb.LoginRequiredError{Context: context}
 		}
 		if err != nil {
-			return err
-		}
-	}
-
-	if prq.Device {
-		var ok bool
-		ok, err = IsProvisioned(e, ctx)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			err = libkb.DeviceRequiredError{}
 			return err
 		}
 	}

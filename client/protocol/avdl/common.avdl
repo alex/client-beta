@@ -49,7 +49,6 @@ protocol Common {
 		string parentID;
 		DeviceID deviceID;
 		string deviceDescription;
-		string deviceType;
 		Time cTime;
 		Time eTime;
 	}

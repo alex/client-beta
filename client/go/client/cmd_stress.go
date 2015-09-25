@@ -20,8 +20,9 @@ import (
 
 func NewCmdStress(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:  "stress",
-		Usage: "Run some stressful commands on the service (devel only)",
+		Name:        "stress",
+		Usage:       "keybase stress",
+		Description: "Run some stressful commands on the service.",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdStress{}, "stress", c)
 		},
@@ -51,9 +52,9 @@ func (c *CmdStress) rpcClient() (*rpc2.Client, error) {
 		c.secretUIProtocol(),
 		NewIdentifyUIProtocol(),
 		c.gpgUIProtocol(),
+		NewLogUIProtocol(),
 		NewDoctorUIProtocol(),
 		NewLocksmithUIProtocol(),
-		NewLoginUIProtocol(),
 	}
 	if err := RegisterProtocols(protocols); err != nil {
 		return nil, err

@@ -51,17 +51,7 @@ func (v *CmdStatus) Run() (err error) {
 	if err != nil {
 		return err
 	}
-
-	devCli, err := GetDeviceClient()
-	if err != nil {
-		return err
-	}
-	devs, err := devCli.DeviceList(0)
-	if err != nil {
-		return err
-	}
-
-	v.printExportedMe(me, publicKeys, devs)
+	v.printExportedMe(me, publicKeys)
 	return nil
 }
 
@@ -75,15 +65,10 @@ func findSubkeys(parentID keybase1.KID, allKeys []keybase1.PublicKey) []keybase1
 	return ret
 }
 
-func (v *CmdStatus) printExportedMe(me keybase1.User, publicKeys []keybase1.PublicKey, devices []keybase1.Device) error {
+func (v *CmdStatus) printExportedMe(me keybase1.User, publicKeys []keybase1.PublicKey) error {
 	GlobUI.Printf("Username: %s\n", me.Username)
 	GlobUI.Printf("User ID: %s\n", me.Uid)
 	GlobUI.Printf("Device ID: %s\n", G.Env.GetDeviceID())
-	for _, device := range devices {
-		if device.DeviceID == G.Env.GetDeviceID() {
-			GlobUI.Printf("Device name: %s\n", device.Name)
-		}
-	}
 	if len(publicKeys) == 0 {
 		GlobUI.Printf("No public keys.\n")
 		return nil
@@ -140,17 +125,11 @@ func printKey(key keybase1.PublicKey, subkeys []keybase1.PublicKey, indent int) 
 			GlobUI.Printf("%s%s%s%s\n", indentSpace(indent+2), identity.Username, commentStr, emailStr)
 		}
 	}
-	if key.DeviceID != "" || key.DeviceType != "" || key.DeviceDescription != "" {
-		GlobUI.Printf("%sDevice:\n", indentSpace(indent+1))
-		if key.DeviceID != "" {
-			GlobUI.Printf("%sID: %s\n", indentSpace(indent+2), key.DeviceID)
-		}
-		if key.DeviceType != "" {
-			GlobUI.Printf("%sType: %s\n", indentSpace(indent+2), key.DeviceType)
-		}
-		if key.DeviceDescription != "" {
-			GlobUI.Printf("%sDescription: %s\n", indentSpace(indent+2), key.DeviceDescription)
-		}
+	if key.DeviceID != "" {
+		GlobUI.Printf("%sDevice ID: %s\n", indentSpace(indent+1), key.DeviceID)
+	}
+	if key.DeviceDescription != "" {
+		GlobUI.Printf("%sDevice Description: %s\n", indentSpace(indent+1), key.DeviceDescription)
 	}
 	GlobUI.Printf("%sCreated: %s\n", indentSpace(indent+1), keybase1.FromTime(key.CTime))
 	GlobUI.Printf("%sExpires: %s\n", indentSpace(indent+1), keybase1.FromTime(key.ETime))
@@ -166,9 +145,10 @@ func printKey(key keybase1.PublicKey, subkeys []keybase1.PublicKey, indent int) 
 
 func NewCmdStatus(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:  "status",
-		Usage: "Show information about the current user",
-		Flags: []cli.Flag{},
+		Name:        "status",
+		Usage:       "keybase status",
+		Description: "Show information about the current user.",
+		Flags:       []cli.Flag{},
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdStatus{}, "status", c)
 		},

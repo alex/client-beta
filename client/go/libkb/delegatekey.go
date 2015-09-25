@@ -240,6 +240,7 @@ func (d *Delegator) post(lctx LoginContext) (err error) {
 		hargs["private_key"] = S{Val: d.EncodedPrivateKey}
 	}
 
+	G.Log.Debug("Post NewKey: %v", hargs)
 	arg := APIArg{
 		Endpoint:     "key/add",
 		NeedSession:  true,

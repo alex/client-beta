@@ -1,10 +1,11 @@
 package client
 
 import (
+	"io"
+
 	"github.com/keybase/client/go/libkb"
 	"github.com/keybase/client/go/minterm"
 	keybase1 "github.com/keybase/client/protocol/go"
-	"io"
 )
 
 type Terminal struct {
@@ -77,7 +78,6 @@ func (t Terminal) GetSecret(arg *keybase1.SecretEntryArg) (res *keybase1.SecretE
 
 	desc := arg.Desc
 	prompt := arg.Prompt
-	canceled := false
 
 	if len(arg.Err) > 0 {
 		G.Log.Error(arg.Err)
@@ -92,15 +92,16 @@ func (t Terminal) GetSecret(arg *keybase1.SecretEntryArg) (res *keybase1.SecretE
 	var txt string
 	txt, err = t.PromptPassword(prompt)
 
-	if err == io.EOF || err == minterm.ErrPromptInterrupted || len(txt) == 0 {
-		err = nil
-		res = &keybase1.SecretEntryRes{Canceled: true}
-		canceled = true
-	} else if err == nil {
+	if err != nil {
+		if err == io.EOF || err == minterm.ErrPromptInterrupted {
+			err = nil
+			res = &keybase1.SecretEntryRes{Canceled: true}
+		}
+	} else {
 		res = &keybase1.SecretEntryRes{Text: txt}
 	}
 
-	if arg.UseSecretStore && !canceled && err == nil {
+	if arg.UseSecretStore {
 		// TODO: Default to 'No' and dismiss the question for
 		// about a day if 'No' is selected.
 		res.StoreSecret, err = t.PromptYesNo(libkb.GetTerminalPrompt(), PromptDefaultYes)

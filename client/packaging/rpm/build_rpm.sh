@@ -8,20 +8,10 @@ set -e -u -o pipefail
 
 here="$(dirname "$BASH_SOURCE")"
 
-mode="$("$here/../build_mode.sh")"
-binary_name="$("$here/../binary_name.sh")"
-if [ "$mode" = "release" ] ; then
-  go_tags="release"
-elif [ "$mode" = "staging" ] ; then
-  go_tags="staging"
-else
-  go_tags=""
-fi
-
 # Take the first argument, or a tmp dir if there is no first argument.
 build_root="${1:-$(mktemp -d)}"
 
-echo "Building $mode mode in $build_root"
+echo Building in: "$build_root"
 
 build_one_architecture() {
   # Everything gets laid out in $dest as it should be on the filesystem. The
@@ -30,16 +20,14 @@ build_one_architecture() {
 
   # `go build` reads $GOARCH
   echo "building Go client for $GOARCH"
-  go build -tags "$go_tags" -o "$dest/usr/bin/$binary_name" github.com/keybase/client/go/keybase
+  go build -o "$dest/usr/bin/keybase" github.com/keybase/client/go/keybase
 
-  version="$("$here/../version.sh")"
+  # TODO: Make `keybase --version` behave better.
+  version="$("$dest/usr/bin/keybase" --version 2> /dev/null | cut -d " " -f 3 || true)"
 
   spec="$build_root/SPECS/keybase-$rpm_arch.spec"
   mkdir -p "$(dirname "$spec")"
-  cat "$here/spec.template" \
-    | sed "s/@@NAME@@/$binary_name/" \
-    | sed "s/@@VERSION@@/$version/" \
-    > "$spec"
+  cat "$here/spec.template" | sed "s/@@VERSION@@/$version/" > "$spec"
   cat "$here/postinst.template" | sed "s/@@ARCH@@/$rpm_arch/" >> "$spec"
 
   rpmbuild --define "_topdir $build_root" --target "$rpm_arch" -bb "$spec"

@@ -9,7 +9,3 @@ A local protocol for different parts of the Keybase system
 * output files dropped into `json/`
 
 
-making a new protocol
-=====================
-* Add filename to Makefile under build-stamp
-* Add the protocol to the master list in service/main.go RegisterProtocols

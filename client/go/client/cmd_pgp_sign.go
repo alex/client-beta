@@ -13,9 +13,9 @@ import (
 
 func NewCmdPGPSign(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:         "sign",
-		Usage:        "PGP sign a document.",
-		ArgumentHelp: "[filename]",
+		Name:        "sign",
+		Usage:       "keybase pgp sign",
+		Description: "PGP sign a document.",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdPGPSign{}, "sign", c)
 		},

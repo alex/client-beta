@@ -81,7 +81,6 @@ type PublicKey struct {
 	ParentID          string        `codec:"parentID" json:"parentID"`
 	DeviceID          DeviceID      `codec:"deviceID" json:"deviceID"`
 	DeviceDescription string        `codec:"deviceDescription" json:"deviceDescription"`
-	DeviceType        string        `codec:"deviceType" json:"deviceType"`
 	CTime             Time          `codec:"cTime" json:"cTime"`
 	ETime             Time          `codec:"eTime" json:"eTime"`
 }
@@ -433,32 +432,23 @@ func (c CryptoClient) UnboxBytes32(__arg UnboxBytes32Arg) (res Bytes32, err erro
 }
 
 type StopArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
 }
 
 type LogRotateArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
 }
 
 type SetLogLevelArg struct {
-	SessionID int      `codec:"sessionID" json:"sessionID"`
-	Level     LogLevel `codec:"level" json:"level"`
+	Level LogLevel `codec:"level" json:"level"`
 }
 
 type ReloadArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
-}
-
-type DbNukeArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
 }
 
 type CtlInterface interface {
-	Stop(int) error
-	LogRotate(int) error
-	SetLogLevel(SetLogLevelArg) error
-	Reload(int) error
-	DbNuke(int) error
+	Stop() error
+	LogRotate() error
+	SetLogLevel(LogLevel) error
+	Reload() error
 }
 
 func CtlProtocol(i CtlInterface) rpc2.Protocol {
@@ -468,35 +458,28 @@ func CtlProtocol(i CtlInterface) rpc2.Protocol {
 			"stop": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]StopArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.Stop(args[0].SessionID)
+					err = i.Stop()
 				}
 				return
 			},
 			"logRotate": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]LogRotateArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.LogRotate(args[0].SessionID)
+					err = i.LogRotate()
 				}
 				return
 			},
 			"setLogLevel": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]SetLogLevelArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.SetLogLevel(args[0])
+					err = i.SetLogLevel(args[0].Level)
 				}
 				return
 			},
 			"reload": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]ReloadArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.Reload(args[0].SessionID)
-				}
-				return
-			},
-			"dbNuke": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
-				args := make([]DbNukeArg, 1)
-				if err = nxt(&args); err == nil {
-					err = i.DbNuke(args[0].SessionID)
+					err = i.Reload()
 				}
 				return
 			},
@@ -509,106 +492,24 @@ type CtlClient struct {
 	Cli GenericClient
 }
 
-func (c CtlClient) Stop(sessionID int) (err error) {
-	__arg := StopArg{SessionID: sessionID}
-	err = c.Cli.Call("keybase.1.ctl.stop", []interface{}{__arg}, nil)
+func (c CtlClient) Stop() (err error) {
+	err = c.Cli.Call("keybase.1.ctl.stop", []interface{}{StopArg{}}, nil)
 	return
 }
 
-func (c CtlClient) LogRotate(sessionID int) (err error) {
-	__arg := LogRotateArg{SessionID: sessionID}
-	err = c.Cli.Call("keybase.1.ctl.logRotate", []interface{}{__arg}, nil)
+func (c CtlClient) LogRotate() (err error) {
+	err = c.Cli.Call("keybase.1.ctl.logRotate", []interface{}{LogRotateArg{}}, nil)
 	return
 }
 
-func (c CtlClient) SetLogLevel(__arg SetLogLevelArg) (err error) {
+func (c CtlClient) SetLogLevel(level LogLevel) (err error) {
+	__arg := SetLogLevelArg{Level: level}
 	err = c.Cli.Call("keybase.1.ctl.setLogLevel", []interface{}{__arg}, nil)
 	return
 }
 
-func (c CtlClient) Reload(sessionID int) (err error) {
-	__arg := ReloadArg{SessionID: sessionID}
-	err = c.Cli.Call("keybase.1.ctl.reload", []interface{}{__arg}, nil)
-	return
-}
-
-func (c CtlClient) DbNuke(sessionID int) (err error) {
-	__arg := DbNukeArg{SessionID: sessionID}
-	err = c.Cli.Call("keybase.1.ctl.dbNuke", []interface{}{__arg}, nil)
-	return
-}
-
-type FirstStepResult struct {
-	ValPlusTwo int `codec:"valPlusTwo" json:"valPlusTwo"`
-}
-
-type FirstStepArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
-	Val       int `codec:"val" json:"val"`
-}
-
-type SecondStepArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
-	Val       int `codec:"val" json:"val"`
-}
-
-type IncrementArg struct {
-	SessionID int `codec:"sessionID" json:"sessionID"`
-	Val       int `codec:"val" json:"val"`
-}
-
-type DebuggingInterface interface {
-	FirstStep(FirstStepArg) (FirstStepResult, error)
-	SecondStep(SecondStepArg) (int, error)
-	Increment(IncrementArg) (int, error)
-}
-
-func DebuggingProtocol(i DebuggingInterface) rpc2.Protocol {
-	return rpc2.Protocol{
-		Name: "keybase.1.debugging",
-		Methods: map[string]rpc2.ServeHook{
-			"firstStep": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
-				args := make([]FirstStepArg, 1)
-				if err = nxt(&args); err == nil {
-					ret, err = i.FirstStep(args[0])
-				}
-				return
-			},
-			"secondStep": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
-				args := make([]SecondStepArg, 1)
-				if err = nxt(&args); err == nil {
-					ret, err = i.SecondStep(args[0])
-				}
-				return
-			},
-			"increment": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
-				args := make([]IncrementArg, 1)
-				if err = nxt(&args); err == nil {
-					ret, err = i.Increment(args[0])
-				}
-				return
-			},
-		},
-	}
-
-}
-
-type DebuggingClient struct {
-	Cli GenericClient
-}
-
-func (c DebuggingClient) FirstStep(__arg FirstStepArg) (res FirstStepResult, err error) {
-	err = c.Cli.Call("keybase.1.debugging.firstStep", []interface{}{__arg}, &res)
-	return
-}
-
-func (c DebuggingClient) SecondStep(__arg SecondStepArg) (res int, err error) {
-	err = c.Cli.Call("keybase.1.debugging.secondStep", []interface{}{__arg}, &res)
-	return
-}
-
-func (c DebuggingClient) Increment(__arg IncrementArg) (res int, err error) {
-	err = c.Cli.Call("keybase.1.debugging.increment", []interface{}{__arg}, &res)
+func (c CtlClient) Reload() (err error) {
+	err = c.Cli.Call("keybase.1.ctl.reload", []interface{}{ReloadArg{}}, nil)
 	return
 }
 
@@ -1899,38 +1800,32 @@ type AuthenticateArg struct {
 }
 
 type PutMetadataArg struct {
-	MdBlock []byte            `codec:"mdBlock" json:"mdBlock"`
-	LogTags map[string]string `codec:"logTags" json:"logTags"`
+	MdBlock []byte `codec:"mdBlock" json:"mdBlock"`
 }
 
 type GetMetadataArg struct {
-	FolderID      string            `codec:"folderID" json:"folderID"`
-	FolderHandle  []byte            `codec:"folderHandle" json:"folderHandle"`
-	Unmerged      bool              `codec:"unmerged" json:"unmerged"`
-	StartRevision int64             `codec:"startRevision" json:"startRevision"`
-	StopRevision  int64             `codec:"stopRevision" json:"stopRevision"`
-	LogTags       map[string]string `codec:"logTags" json:"logTags"`
+	FolderID      string `codec:"folderID" json:"folderID"`
+	FolderHandle  []byte `codec:"folderHandle" json:"folderHandle"`
+	Unmerged      bool   `codec:"unmerged" json:"unmerged"`
+	StartRevision int64  `codec:"startRevision" json:"startRevision"`
+	StopRevision  int64  `codec:"stopRevision" json:"stopRevision"`
 }
 
 type RegisterForUpdatesArg struct {
-	FolderID     string            `codec:"folderID" json:"folderID"`
-	CurrRevision int64             `codec:"currRevision" json:"currRevision"`
-	LogTags      map[string]string `codec:"logTags" json:"logTags"`
+	FolderID     string `codec:"folderID" json:"folderID"`
+	CurrRevision int64  `codec:"currRevision" json:"currRevision"`
 }
 
 type PruneUnmergedArg struct {
-	FolderID string            `codec:"folderID" json:"folderID"`
-	LogTags  map[string]string `codec:"logTags" json:"logTags"`
+	FolderID string `codec:"folderID" json:"folderID"`
 }
 
 type PutKeysArg struct {
-	KeyHalves []KeyHalf         `codec:"keyHalves" json:"keyHalves"`
-	LogTags   map[string]string `codec:"logTags" json:"logTags"`
+	KeyHalves []KeyHalf `codec:"keyHalves" json:"keyHalves"`
 }
 
 type GetKeyArg struct {
-	KeyHalfID []byte            `codec:"keyHalfID" json:"keyHalfID"`
-	LogTags   map[string]string `codec:"logTags" json:"logTags"`
+	KeyHalfID []byte `codec:"keyHalfID" json:"keyHalfID"`
 }
 
 type TruncateLockArg struct {
@@ -1941,20 +1836,16 @@ type TruncateUnlockArg struct {
 	FolderID string `codec:"folderID" json:"folderID"`
 }
 
-type PingArg struct {
-}
-
 type MetadataInterface interface {
-	Authenticate(AuthenticateArg) (int, error)
-	PutMetadata(PutMetadataArg) error
+	Authenticate(AuthenticateArg) error
+	PutMetadata([]byte) error
 	GetMetadata(GetMetadataArg) (MetadataResponse, error)
 	RegisterForUpdates(RegisterForUpdatesArg) error
-	PruneUnmerged(PruneUnmergedArg) error
-	PutKeys(PutKeysArg) error
-	GetKey(GetKeyArg) ([]byte, error)
+	PruneUnmerged(string) error
+	PutKeys([]KeyHalf) error
+	GetKey([]byte) ([]byte, error)
 	TruncateLock(string) (bool, error)
 	TruncateUnlock(string) (bool, error)
-	Ping() error
 }
 
 func MetadataProtocol(i MetadataInterface) rpc2.Protocol {
@@ -1964,14 +1855,14 @@ func MetadataProtocol(i MetadataInterface) rpc2.Protocol {
 			"authenticate": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]AuthenticateArg, 1)
 				if err = nxt(&args); err == nil {
-					ret, err = i.Authenticate(args[0])
+					err = i.Authenticate(args[0])
 				}
 				return
 			},
 			"putMetadata": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]PutMetadataArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.PutMetadata(args[0])
+					err = i.PutMetadata(args[0].MdBlock)
 				}
 				return
 			},
@@ -1992,21 +1883,21 @@ func MetadataProtocol(i MetadataInterface) rpc2.Protocol {
 			"pruneUnmerged": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]PruneUnmergedArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.PruneUnmerged(args[0])
+					err = i.PruneUnmerged(args[0].FolderID)
 				}
 				return
 			},
 			"putKeys": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]PutKeysArg, 1)
 				if err = nxt(&args); err == nil {
-					err = i.PutKeys(args[0])
+					err = i.PutKeys(args[0].KeyHalves)
 				}
 				return
 			},
 			"getKey": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
 				args := make([]GetKeyArg, 1)
 				if err = nxt(&args); err == nil {
-					ret, err = i.GetKey(args[0])
+					ret, err = i.GetKey(args[0].KeyHalfID)
 				}
 				return
 			},
@@ -2024,13 +1915,6 @@ func MetadataProtocol(i MetadataInterface) rpc2.Protocol {
 				}
 				return
 			},
-			"ping": func(nxt rpc2.DecodeNext) (ret interface{}, err error) {
-				args := make([]PingArg, 1)
-				if err = nxt(&args); err == nil {
-					err = i.Ping()
-				}
-				return
-			},
 		},
 	}
 
@@ -2040,12 +1924,13 @@ type MetadataClient struct {
 	Cli GenericClient
 }
 
-func (c MetadataClient) Authenticate(__arg AuthenticateArg) (res int, err error) {
-	err = c.Cli.Call("keybase.1.metadata.authenticate", []interface{}{__arg}, &res)
+func (c MetadataClient) Authenticate(__arg AuthenticateArg) (err error) {
+	err = c.Cli.Call("keybase.1.metadata.authenticate", []interface{}{__arg}, nil)
 	return
 }
 
-func (c MetadataClient) PutMetadata(__arg PutMetadataArg) (err error) {
+func (c MetadataClient) PutMetadata(mdBlock []byte) (err error) {
+	__arg := PutMetadataArg{MdBlock: mdBlock}
 	err = c.Cli.Call("keybase.1.metadata.putMetadata", []interface{}{__arg}, nil)
 	return
 }
@@ -2060,17 +1945,20 @@ func (c MetadataClient) RegisterForUpdates(__arg RegisterForUpdatesArg) (err err
 	return
 }
 
-func (c MetadataClient) PruneUnmerged(__arg PruneUnmergedArg) (err error) {
+func (c MetadataClient) PruneUnmerged(folderID string) (err error) {
+	__arg := PruneUnmergedArg{FolderID: folderID}
 	err = c.Cli.Call("keybase.1.metadata.pruneUnmerged", []interface{}{__arg}, nil)
 	return
 }
 
-func (c MetadataClient) PutKeys(__arg PutKeysArg) (err error) {
+func (c MetadataClient) PutKeys(keyHalves []KeyHalf) (err error) {
+	__arg := PutKeysArg{KeyHalves: keyHalves}
 	err = c.Cli.Call("keybase.1.metadata.putKeys", []interface{}{__arg}, nil)
 	return
 }
 
-func (c MetadataClient) GetKey(__arg GetKeyArg) (res []byte, err error) {
+func (c MetadataClient) GetKey(keyHalfID []byte) (res []byte, err error) {
+	__arg := GetKeyArg{KeyHalfID: keyHalfID}
 	err = c.Cli.Call("keybase.1.metadata.getKey", []interface{}{__arg}, &res)
 	return
 }
@@ -2084,11 +1972,6 @@ func (c MetadataClient) TruncateLock(folderID string) (res bool, err error) {
 func (c MetadataClient) TruncateUnlock(folderID string) (res bool, err error) {
 	__arg := TruncateUnlockArg{FolderID: folderID}
 	err = c.Cli.Call("keybase.1.metadata.truncateUnlock", []interface{}{__arg}, &res)
-	return
-}
-
-func (c MetadataClient) Ping() (err error) {
-	err = c.Cli.Call("keybase.1.metadata.ping", []interface{}{PingArg{}}, nil)
 	return
 }
 

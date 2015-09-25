@@ -13,8 +13,9 @@ import (
 
 func NewCmdPGPExport(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:  "export",
-		Usage: "Export a PGP key from keybase",
+		Name:        "export",
+		Usage:       "keybase pgp export",
+		Description: "Export a PGP key from keybase.",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdPGPExport{}, "export", c)
 		},
@@ -58,6 +59,7 @@ func (s *CmdPGPExport) ParseArgv(ctx *cli.Context) error {
 
 func (s *CmdPGPExport) Run() (err error) {
 	protocols := []rpc2.Protocol{
+		NewLogUIProtocol(),
 		NewSecretUIProtocol(),
 	}
 

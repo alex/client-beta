@@ -109,7 +109,8 @@ func (e *PGPDecrypt) Run(ctx *Context) (err error) {
 	}
 
 	bundle := libkb.NewPGPKeyBundle(e.signStatus.Entity)
-	OutputSignatureSuccess(ctx, bundle.GetFingerprint(), e.owner, e.signStatus.SignatureTime)
+	ctx.LogUI.Notice("Signature verified.  Signed by %s.  PGP Fingerprint: %s.", e.owner.GetName(), bundle.GetFingerprint())
+
 	return nil
 }
 

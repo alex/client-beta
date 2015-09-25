@@ -73,6 +73,7 @@ func (ll *LoopbackListener) Dial() (net.Conn, error) {
 	}
 	a, b := NewLoopbackConnPair()
 	ll.ch <- a
+	G.Log.Debug("- LoopbackListener.Dial")
 	return b, nil
 }
 

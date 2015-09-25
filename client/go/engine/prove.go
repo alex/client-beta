@@ -40,7 +40,7 @@ func (p *Prove) Name() string {
 
 // GetPrereqs returns the engine prereqs.
 func (p *Prove) Prereqs() Prereqs {
-	return Prereqs{Device: true}
+	return Prereqs{Session: true}
 }
 
 // RequiredUIs returns the required UIs.

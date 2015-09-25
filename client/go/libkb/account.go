@@ -294,7 +294,7 @@ func (a *Account) LockedLocalSecretKey(ska SecretKeyArg) (*SKB, error) {
 }
 
 func (a *Account) Shutdown() error {
-	return nil
+	return a.LocalSession().Write()
 }
 
 func (a *Account) EnsureUsername(username NormalizedUsername) {
@@ -352,7 +352,8 @@ func (a *Account) SaveState(sessionID, csrf string, username NormalizedUsername,
 	if err := cw.Write(); err != nil {
 		return err
 	}
-	if err := a.LocalSession().SetLoggedIn(sessionID, csrf, username, uid); err != nil {
+	a.LocalSession().SetLoggedIn(sessionID, csrf, username, uid)
+	if err := a.LocalSession().Write(); err != nil {
 		return err
 	}
 

@@ -429,18 +429,6 @@ func (e LoginRequiredError) Error() string {
 	return msg
 }
 
-type ReloginRequiredError struct{}
-
-func (e ReloginRequiredError) Error() string {
-	return "Login required due to an unexpected error since your previous login."
-}
-
-type DeviceRequiredError struct{}
-
-func (e DeviceRequiredError) Error() string {
-	return "Provisioned device required; login to provision this device"
-}
-
 //=============================================================================
 
 type LogoutError struct{}
@@ -913,39 +901,13 @@ func (c CanceledError) Error() string {
 
 //=============================================================================
 
-type NoDeviceError struct {
-	Reason string
-}
-
-func (e NoDeviceError) Error() string {
-	return fmt.Sprintf("No device found %s", e.Reason)
-}
-
-type TimeoutError struct{}
-
-func (e TimeoutError) Error() string {
-	return "Operation timed out"
-}
-
-type ReceiverDeviceError struct {
-	Msg string
-}
-
-func NewReceiverDeviceError(expected, received keybase1.DeviceID) ReceiverDeviceError {
-	return ReceiverDeviceError{Msg: fmt.Sprintf("Device ID mismatch in message receiver, got %q, expected %q", received, expected)}
-}
-
-func (e ReceiverDeviceError) Error() string {
-	return e.Msg
-}
-
-type InvalidKexPhraseError struct{}
-
-func (e InvalidKexPhraseError) Error() string {
-	return "Invalid kex secret phrase"
-}
-
+var ErrNoDevice = errors.New("No device found")
+var ErrTimeout = errors.New("Operation timed out")
 var ErrNilUser = errors.New("User is nil")
+var ErrReceiverDevice = errors.New("Device ID mismatch in message receiver")
+var ErrInvalidKexSession = errors.New("Invalid kex session ID")
+var ErrInvalidKexPhrase = errors.New("Invalid kex secret phrase")
+var ErrCannotGenerateDevice = errors.New("Cannot generate new device ID")
 
 //=============================================================================
 
@@ -1008,21 +970,21 @@ func (e DecryptionError) Error() string {
 //=============================================================================
 
 type ChainLinkPrevHashMismatchError struct {
-	Msg string
+	err error
 }
 
 func (e ChainLinkPrevHashMismatchError) Error() string {
-	return fmt.Sprintf("Chain link prev hash mismatch error: %s", e.Msg)
+	return fmt.Sprintf("Chain link prev hash mismatch error: %s", e.err)
 }
 
 //=============================================================================
 
 type ChainLinkWrongSeqnoError struct {
-	Msg string
+	err error
 }
 
 func (e ChainLinkWrongSeqnoError) Error() string {
-	return fmt.Sprintf("Chain link wrong seqno error: %s", e.Msg)
+	return fmt.Sprintf("Chain link wrong seqno error: %s", e.err)
 }
 
 //=============================================================================
@@ -1093,14 +1055,4 @@ type KeyVersionError struct{}
 
 func (k KeyVersionError) Error() string {
 	return "Invalid key version"
-}
-
-//=============================================================================
-
-type PIDFileLockError struct {
-	Filename string
-}
-
-func (e PIDFileLockError) Error() string {
-	return fmt.Sprintf("error locking %s: server already running", e.Filename)
 }
