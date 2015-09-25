@@ -41,7 +41,6 @@ func (v *CmdPGPGen) ParseArgv(ctx *cli.Context) (err error) {
 // Why use CreatePGPIDs rather than MakeAllIds?
 func (v *CmdPGPGen) Run() (err error) {
 	protocols := []rpc2.Protocol{
-		NewLogUIProtocol(),
 		NewSecretUIProtocol(),
 	}
 	cli, err := GetPGPClient()
@@ -79,9 +78,8 @@ func AddPGPMultiInstructions(err error) error {
 
 func NewCmdPGPGen(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:        "gen",
-		Usage:       "keybase pgp gen",
-		Description: "Generate a new PGP key and write to local secret keychain.",
+		Name:  "gen",
+		Usage: "Generate a new PGP key and write to local secret keychain",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "d, debug",

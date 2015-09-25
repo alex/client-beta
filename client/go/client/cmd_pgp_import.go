@@ -14,9 +14,8 @@ import (
 
 func NewCmdPGPImport(cl *libcmdline.CommandLine) cli.Command {
 	return cli.Command{
-		Name:        "import",
-		Usage:       "keybase pgp import",
-		Description: "Import a PGP key into keybase.",
+		Name:  "import",
+		Usage: "Import a PGP key into keybase",
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(&CmdPGPImport{}, "import", c)
 		},
@@ -55,7 +54,6 @@ func (s *CmdPGPImport) Run() error {
 	}
 
 	protocols := []rpc2.Protocol{
-		NewLogUIProtocol(),
 		NewSecretUIProtocol(),
 	}
 

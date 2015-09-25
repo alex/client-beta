@@ -109,6 +109,9 @@
       "name" : "deviceDescription",
       "type" : "string"
     }, {
+      "name" : "deviceType",
+      "type" : "string"
+    }, {
       "name" : "cTime",
       "type" : "Time"
     }, {
@@ -179,6 +182,13 @@
         "type" : "int"
       } ],
       "response" : "Session"
+    },
+    "currentUID" : {
+      "request" : [ {
+        "name" : "sessionID",
+        "type" : "int"
+      } ],
+      "response" : "UID"
     }
   }
 }

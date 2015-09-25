@@ -1,3 +1,5 @@
+// +build !release
+
 package libkb
 
 import (
@@ -167,7 +169,6 @@ func setupTestContext(t *testing.T, nm string) (tc TestContext, err error) {
 	tc.Tp.GPGHome = tc.Tp.Home
 	tc.Tp.GPGOptions = []string{"--homedir=" + tc.Tp.GPGHome}
 
-	tc.Tp.ServerURI = DevelServerURI
 	tc.Tp.Debug = false
 	tc.Tp.Devel = true
 	g.Env.Test = tc.Tp
@@ -177,6 +178,10 @@ func setupTestContext(t *testing.T, nm string) (tc TestContext, err error) {
 	if err = g.ConfigureAPI(); err != nil {
 		return
 	}
+
+	// use stub engine for external api
+	g.XAPI = NewStubAPIEngine()
+
 	if err = g.ConfigureConfig(); err != nil {
 		return
 	}

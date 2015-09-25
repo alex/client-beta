@@ -4,6 +4,7 @@ package libkb
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 
 	keybase1 "github.com/keybase/client/protocol/go"
@@ -25,10 +26,22 @@ type DeviceKey struct {
 	Type          string               `json:"type"`
 	CTime         int64                `json:"ctime"`
 	MTime         int64                `json:"mtime"`
-	Description   string               `json:"description"`
+	Description   string               `json:"name"`
 	Status        int                  `json:"status"`
 	LksServerHalf string               `json:"lks_server_half"`
 	PPGen         PassphraseGeneration `json:"passphrase_generation"`
+}
+
+func (d DeviceKey) Display() string {
+	if d.Type == DeviceTypePaper {
+		// XXX not sure if we need to support our existing paper keys, but without this
+		// someone is surely going to complain:
+		if strings.HasPrefix(d.Description, "Paper Key") {
+			return d.Description
+		}
+		return fmt.Sprintf("Paper Key (%s...)", d.Description)
+	}
+	return d.Description
 }
 
 type DeviceKeyMap map[keybase1.DeviceID]DeviceKey
@@ -70,21 +83,31 @@ func (ss *SecretSyncer) loadFromStorage(uid keybase1.UID) (err error) {
 	var found bool
 	found, err = ss.G().LocalDb.GetInto(&tmp, ss.dbKey(uid))
 	ss.G().Log.Debug("| loadFromStorage -> found=%v, err=%s", found, ErrToOk(err))
-	if found {
-		ss.G().Log.Debug("| Loaded version %d", tmp.Version)
-	} else if err == nil {
+	if err != nil {
+		return err
+	}
+	if !found {
 		ss.G().Log.Debug("| Loaded empty record set")
+		return nil
 	}
-	if err == nil {
-		ss.keys = &tmp
-	}
-	return
+
+	// only set ss.keys to something if found.
+	//
+	// This is part of keybase-issues#1783:  an (old) user with a synced
+	// private key fell back to gpg instead of using a synced key.
+	//
+
+	ss.G().Log.Debug("| Loaded version %d", tmp.Version)
+	ss.keys = &tmp
+
+	return nil
 }
 
 func (ss *SecretSyncer) syncFromServer(uid keybase1.UID, sr SessionReader) (err error) {
 	hargs := HTTPArgs{}
 
 	if ss.keys != nil {
+		ss.G().Log.Debug("| adding version %d to fetch_private call", ss.keys.Version)
 		hargs.Add("version", I{ss.keys.Version})
 	}
 	var res *APIRes
@@ -108,6 +131,8 @@ func (ss *SecretSyncer) syncFromServer(uid keybase1.UID, sr SessionReader) (err 
 		ss.G().Log.Debug("| upgrade to version -> %d", obj.Version)
 		ss.keys = &obj
 		ss.dirty = true
+	} else {
+		ss.G().Log.Debug("| not changing synced keys: synced version %d not newer than existing version %d", obj.Version, ss.keys.Version)
 	}
 
 	return
@@ -169,11 +194,11 @@ func (k *ServerPrivateKey) FindActiveKey(ckf *ComputedKeyFamily) (ret *SKB, err 
 
 func (ss *SecretSyncer) FindDevice(id keybase1.DeviceID) (DeviceKey, error) {
 	if ss.keys == nil {
-		return DeviceKey{}, fmt.Errorf("No device found for ID = %s", id)
+		return DeviceKey{}, fmt.Errorf("SecretSyncer: no device found for ID = %s", id)
 	}
 	dev, ok := ss.keys.Devices[id]
 	if !ok {
-		return DeviceKey{}, fmt.Errorf("No device found for ID = %s", id)
+		return DeviceKey{}, fmt.Errorf("SecretSyncer: no device found for ID = %s", id)
 	}
 	return dev, nil
 }
