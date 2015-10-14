@@ -1,4 +1,4 @@
-// +build !release
+// +build !production
 
 // this is the list of commands for the devel version of the
 // client.
@@ -13,6 +13,12 @@ func GetCommands(cl *libcmdline.CommandLine) []cli.Command {
 	return []cli.Command{
 		NewCmdBTC(cl),
 		NewCmdCert(cl),
+		NewCmdCompatDecrypt(cl),
+		NewCmdCompatDir(cl),
+		NewCmdCompatEncrypt(cl),
+		NewCmdCompatPush(cl),
+		NewCmdCompatSign(cl),
+		NewCmdCompatVerify(cl),
 		NewCmdConfig(cl),
 		NewCmdCtl(cl),
 		NewCmdDb(cl),
@@ -38,6 +44,7 @@ func GetCommands(cl *libcmdline.CommandLine) []cli.Command {
 		NewCmdStatus(cl),
 		NewCmdStress(cl),
 		NewCmdTrack(cl),
+		NewCmdUnlock(cl),
 		NewCmdUntrack(cl),
 		NewCmdVersion(cl),
 	}

@@ -37,8 +37,9 @@ else
 fi
 
 clientdir="$GOPATH/src/github.com/keybase/client"
-betadir=${BETADIR:=$GOPATH/src/github.com/keybase/client-beta}
-brewdir=${BREWDIR:=$GOPATH/src/github.com/keybase/homebrew-beta}
+betadir=${BETADIR:-$GOPATH/src/github.com/keybase/client-beta}
+brewdir=${BREWDIR:-$GOPATH/src/github.com/keybase/homebrew-beta}
+serveropsdir=${SERVEROPSDIR:-$GOPATH/src/github.com/keybase/server-ops}
 
 if [ ! -d "$clientdir" ]; then
 	echo "Need client repo, expecting it here: $clientdir"
@@ -55,13 +56,22 @@ if [ ! -d "$brewdir" ]; then
 	exit 1
 fi
 
-src_version="$(egrep -o "([0-9]{1,}\.)+[0-9]{1,}" $clientdir/go/libkb/version.go)"
-build_number="$(egrep -o "const Build = \"\d+\"" $clientdir/go/libkb/version.go | egrep -o "\d+")"
+if [ ! -d "$serveropsdir" ]; then
+	echo "Need server-ops repo, expecting it here: $serveropsdir"
+	exit 1
+fi
 
-if [ "$version" != "$src_version-$build_number" ]; then
-	echo Version $version does not match libkb/version.go $src_version-$build_number
-	echo source version: $src_version
-	echo build number:   $build_number
+version_on_disk="$("$clientdir/packaging/version.sh")"
+
+if [ "$version" != "$version_on_disk" ]; then
+	echo Version $version does not match libkb/version.go $version_on_disk
+	exit 1
+fi
+
+# Make sure you have the Keybase code signing key.
+code_signing_fingerprint="$(cat $serveropsdir/deploy/lib/code_signing_fingerprint)"
+if ! gpg -K "$code_signing_fingerprint" ; then
+	echo "You're missing the GPG code signing secret key ($code_signing_fingerprint)."
 	exit 1
 fi
 
@@ -101,4 +111,7 @@ else
 	echo "$brewdir/$formula.rb did not change."
 fi
 
-# TODO: run linux package maker script here...
+echo "-------------------------------------------------------------------------"
+echo "Creating Linux packages for version $version"
+echo "-------------------------------------------------------------------------"
+"$serveropsdir/deploy/linux_docker_build.sh" "$mode" "$version_tag"

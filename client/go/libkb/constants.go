@@ -115,6 +115,7 @@ const (
 	SCKeyNoEldest            = 920
 	SCKeyDuplicateUpdate     = 921
 	SCSibkeyAlreadyExists    = 922
+	SCDecryptionKeyNotFound  = 924
 	SCBadTrackSession        = 1301
 	SCDeviceNotFound         = 1409
 	SCDeviceMismatch         = 1410
@@ -310,7 +311,9 @@ const (
 	PaperKeyScryptR       = 8
 	PaperKeyScryptP       = 1
 	PaperKeyScryptKeylen  = 128
-	PaperKeyPhraseEntropy = 144
+	PaperKeySecretEntropy = 117
+	PaperKeyIDBits        = 22
+	PaperKeyVersionBits   = 4
 	PaperKeyVersion       = 0
 )
 

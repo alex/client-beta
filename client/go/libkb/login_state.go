@@ -182,26 +182,29 @@ func (s *LoginState) Shutdown() error {
 // GetPassphraseStream either returns a cached, verified passphrase stream
 // (maybe from a previous login) or generates a new one via Login. It will
 // return the current Passphrase stream on success or an error on failure.
-func (s *LoginState) GetPassphraseStream(ui SecretUI) (ret *PassphraseStream, err error) {
-	ret, err = s.PassphraseStream()
+func (s *LoginState) GetPassphraseStream(ui SecretUI) (pps *PassphraseStream, err error) {
+	s.G().Log.Debug("+ GetPassphraseStream() called")
+	defer func() { s.G().Log.Debug("- GetPassphraseStream() -> %s", ErrToOk(err)) }()
+
+	pps, err = s.PassphraseStream()
 	if err != nil {
-		return
+		return nil, err
 	}
-	if ret != nil {
-		return
+	if pps != nil {
+		return pps, nil
 	}
 	if err = s.verifyPassphraseWithServer(ui); err != nil {
-		return
+		return nil, err
 	}
-	ret, err = s.PassphraseStream()
+	pps, err = s.PassphraseStream()
 	if err != nil {
-		return
+		return nil, err
 	}
-	if ret != nil {
-		return
+	if pps != nil {
+		return pps, nil
 	}
 	err = InternalError{"No cached keystream data after login attempt"}
-	return
+	return nil, err
 }
 
 // GetVerifiedTripleSec either returns a cached, verified Triplesec
