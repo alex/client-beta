@@ -388,6 +388,11 @@ typedef NS_ENUM (NSInteger, KBRKexStatusCode) {
 @property NSArray *mdBlocks; /*of bytes*/
 @end
 
+@interface KBRNotificationChannels : KBRObject
+@property BOOL session;
+@property BOOL users;
+@end
+
 typedef NS_ENUM (NSInteger, KBRSignMode) {
 	KBRSignModeAttached = 0,
 	KBRSignModeDetached = 1,
@@ -459,6 +464,18 @@ typedef NS_ENUM (NSInteger, KBRSignMode) {
 typedef NS_ENUM (NSInteger, KBRPromptOverwriteType) {
 	KBRPromptOverwriteTypeSocial = 0,
 	KBRPromptOverwriteTypeSite = 1,
+};
+
+typedef NS_ENUM (NSInteger, KBRProvisionMethod) {
+	KBRProvisionMethodDevice = 0,
+	KBRProvisionMethodGpg = 1,
+	KBRProvisionMethodPaperKey = 2,
+	KBRProvisionMethodPassphrase = 3,
+};
+
+typedef NS_ENUM (NSInteger, KBRDeviceType) {
+	KBRDeviceTypeDesktop = 0,
+	KBRDeviceTypeMobile = 1,
 };
 
 @interface KBRVerifySessionRes : KBRObject
@@ -691,6 +708,9 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 @interface KBRDeviceAddCancelRequestParams : KBRRequestParams
 @property NSInteger sessionID;
 @end
+@interface KBRDeviceXAddRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@end
 @interface KBRDoctorRequestParams : KBRRequestParams
 @property NSInteger sessionID;
 @end
@@ -783,6 +803,7 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 @interface KBRHelloRequestParams : KBRRequestParams
 @property NSString *uid;
 @property NSString *token;
+@property NSString *csrf;
 @property KBRPassphraseStream *pps;
 @property NSString *sigBody;
 @end
@@ -858,11 +879,19 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 @interface KBRResetRequestParams : KBRRequestParams
 @property NSInteger sessionID;
 @end
+@interface KBRRecoverAccountFromEmailAddressRequestParams : KBRRequestParams
+@property NSString *email;
+@end
 @interface KBRPaperKeyRequestParams : KBRRequestParams
 @property NSInteger sessionID;
 @end
 @interface KBRUnlockRequestParams : KBRRequestParams
 @property NSInteger sessionID;
+@end
+@interface KBRXLoginRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@property NSString *deviceType;
+@property NSString *username;
 @end
 @interface KBRGetEmailOrUsernameRequestParams : KBRRequestParams
 @property NSInteger sessionID;
@@ -923,6 +952,12 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 @interface KBRMetadataUpdateRequestParams : KBRRequestParams
 @property NSString *folderID;
 @property long revision;
+@end
+@interface KBRToggleNotificationsRequestParams : KBRRequestParams
+@property KBRNotificationChannels *channels;
+@end
+@interface KBRUserChangedRequestParams : KBRRequestParams
+@property NSString *uid;
 @end
 @interface KBRPgpSignRequestParams : KBRRequestParams
 @property NSInteger sessionID;
@@ -1039,6 +1074,29 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 @property NSInteger sessionID;
 @property KBRText *text;
 @end
+@interface KBRChooseProvisioningMethodRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@property NSArray *gpgUsers;
+@end
+@interface KBRChooseDeviceTypeRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@end
+@interface KBRDisplayAndPromptSecretRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@property NSData *secret;
+@property NSString *phrase;
+@property KBRDeviceType otherDeviceType;
+@end
+@interface KBRDisplaySecretExchangedRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@end
+@interface KBRPromptNewDeviceNameRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@property NSArray *existingDevices;
+@end
+@interface KBRProvisionSuccessRequestParams : KBRRequestParams
+@property NSInteger sessionID;
+@end
 @interface KBRVerifySessionRequestParams : KBRRequestParams
 @property NSString *session;
 @end
@@ -1095,6 +1153,7 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 @property NSString *username;
 @property NSString *deviceName;
 @property BOOL storeSecret;
+@property BOOL skipMail;
 @end
 @interface KBRInviteRequestRequestParams : KBRRequestParams
 @property NSInteger sessionID;
@@ -1336,6 +1395,13 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
  */
 - (void)deviceAddCancel:(void (^)(NSError *error))completion;
 
+/*!
+ Starts the process of adding a new device using an existing
+ device. It is called on the existing device. 
+ This is for kex2.
+ */
+- (void)deviceXAdd:(void (^)(NSError *error))completion;
+
 @end
 
 @interface KBRDoctorRequest : KBRRequest
@@ -1472,7 +1538,7 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 - (void)hello:(KBRHelloRequestParams *)params completion:(void (^)(NSError *error, NSString *helloRes))completion;
 
-- (void)helloWithUid:(NSString *)uid token:(NSString *)token pps:(KBRPassphraseStream *)pps sigBody:(NSString *)sigBody completion:(void (^)(NSError *error, NSString *helloRes))completion;
+- (void)helloWithUid:(NSString *)uid token:(NSString *)token csrf:(NSString *)csrf pps:(KBRPassphraseStream *)pps sigBody:(NSString *)sigBody completion:(void (^)(NSError *error, NSString *helloRes))completion;
 
 - (void)didCounterSign:(KBRDidCounterSignRequestParams *)params completion:(void (^)(NSError *error))completion;
 
@@ -1588,6 +1654,10 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 - (void)reset:(void (^)(NSError *error))completion;
 
+- (void)recoverAccountFromEmailAddress:(KBRRecoverAccountFromEmailAddressRequestParams *)params completion:(void (^)(NSError *error))completion;
+
+- (void)recoverAccountFromEmailAddressWithEmail:(NSString *)email completion:(void (^)(NSError *error))completion;
+
 /*!
  PaperKey generates paper backup keys for restoring an account.
  It calls login_ui.displayPaperKeyPhrase with the phrase.
@@ -1598,6 +1668,13 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
  Unlock restores access to local key store by priming passphrase stream cache.
  */
 - (void)unlock:(void (^)(NSError *error))completion;
+
+/*!
+ Performs login. username is optional. Will use the kex2 flow.
+ */
+- (void)xLogin:(KBRXLoginRequestParams *)params completion:(void (^)(NSError *error))completion;
+
+- (void)xLoginWithDeviceType:(NSString *)deviceType username:(NSString *)username completion:(void (^)(NSError *error))completion;
 
 @end
 
@@ -1666,6 +1743,28 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 - (void)metadataUpdate:(KBRMetadataUpdateRequestParams *)params completion:(void (^)(NSError *error))completion;
 
 - (void)metadataUpdateWithFolderID:(NSString *)folderID revision:(long)revision completion:(void (^)(NSError *error))completion;
+
+@end
+
+@interface KBRNotifyCtlRequest : KBRRequest
+
+- (void)toggleNotifications:(KBRToggleNotificationsRequestParams *)params completion:(void (^)(NSError *error))completion;
+
+- (void)toggleNotificationsWithChannels:(KBRNotificationChannels *)channels completion:(void (^)(NSError *error))completion;
+
+@end
+
+@interface KBRNotifySessionRequest : KBRRequest
+
+- (void)loggedOut:(void (^)(NSError *error))completion;
+
+@end
+
+@interface KBRNotifyUsersRequest : KBRRequest
+
+- (void)userChanged:(KBRUserChangedRequestParams *)params completion:(void (^)(NSError *error))completion;
+
+- (void)userChangedWithUid:(NSString *)uid completion:(void (^)(NSError *error))completion;
 
 @end
 
@@ -1784,6 +1883,54 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 @end
 
+@interface KBRProvisionUiRequest : KBRRequest
+
+/*!
+ Called during device provisioning for the user to select a
+ method for provisioning. gpgUsers will contain a list of
+ locally available gpg private keys. If it is empty, then
+ gpg is not a valid option.
+ */
+- (void)chooseProvisioningMethod:(KBRChooseProvisioningMethodRequestParams *)params completion:(void (^)(NSError *error, KBRProvisionMethod provisionMethod))completion;
+
+- (void)chooseProvisioningMethodWithGpgUsers:(NSArray *)gpgUsers completion:(void (^)(NSError *error, KBRProvisionMethod provisionMethod))completion;
+
+/*!
+ If provisioning via device, this will be called so user can select the provisioner/provisionee device type: desktop or mobile.
+ */
+- (void)chooseDeviceType:(void (^)(NSError *error, KBRDeviceType deviceType))completion;
+
+/*!
+ DisplayAndPromptSecret displays a secret that the user can enter into the other device.
+ It also can return a secret that the user enters into this device (from the other device). 
+ If it does not return a secret, it will be canceled when this device receives the secret via kex2.
+ */
+- (void)displayAndPromptSecret:(KBRDisplayAndPromptSecretRequestParams *)params completion:(void (^)(NSError *error, NSData *bytes))completion;
+
+- (void)displayAndPromptSecretWithSecret:(NSData *)secret phrase:(NSString *)phrase otherDeviceType:(KBRDeviceType)otherDeviceType completion:(void (^)(NSError *error, NSData *bytes))completion;
+
+/*!
+ DisplaySecretExchanged is called when the kex2 secret has successfully been exchanged by the two
+ devices.
+ */
+- (void)displaySecretExchanged:(void (^)(NSError *error))completion;
+
+/*!
+ PromptNewDeviceName is called when the device provisioning process needs a name for the new device.
+ To help the clients not send a duplicate name, existingDevices is populated with the current device
+ names for the user.
+ */
+- (void)promptNewDeviceName:(KBRPromptNewDeviceNameRequestParams *)params completion:(void (^)(NSError *error, NSString *str))completion;
+
+- (void)promptNewDeviceNameWithExistingDevices:(NSArray *)existingDevices completion:(void (^)(NSError *error, NSString *str))completion;
+
+/*!
+ ProvisionSuccess is called after device provisioning runs successfully.
+ */
+- (void)provisionSuccess:(void (^)(NSError *error))completion;
+
+@end
+
 @interface KBRQuotaRequest : KBRRequest
 
 - (void)verifySession:(KBRVerifySessionRequestParams *)params completion:(void (^)(NSError *error, KBRVerifySessionRes *verifySessionRes))completion;
@@ -1818,6 +1965,10 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 - (void)getNewPassphraseWithTerminalPrompt:(NSString *)terminalPrompt pinentryDesc:(NSString *)pinentryDesc pinentryPrompt:(NSString *)pinentryPrompt retryMessage:(NSString *)retryMessage useSecretStore:(BOOL)useSecretStore completion:(void (^)(NSError *error, KBRGetNewPassphraseRes *getNewPassphraseRes))completion;
 
+/*!
+ This is used only for passphrase login, so we don't need to use the secret
+ store.
+ */
 - (void)getKeybasePassphrase:(KBRGetKeybasePassphraseRequestParams *)params completion:(void (^)(NSError *error, NSString *str))completion;
 
 - (void)getKeybasePassphraseWithUsername:(NSString *)username retry:(NSString *)retry completion:(void (^)(NSError *error, NSString *str))completion;
@@ -1844,7 +1995,7 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 - (void)signup:(KBRSignupRequestParams *)params completion:(void (^)(NSError *error, KBRSignupRes *signupRes))completion;
 
-- (void)signupWithEmail:(NSString *)email inviteCode:(NSString *)inviteCode passphrase:(NSString *)passphrase username:(NSString *)username deviceName:(NSString *)deviceName storeSecret:(BOOL)storeSecret completion:(void (^)(NSError *error, KBRSignupRes *signupRes))completion;
+- (void)signupWithEmail:(NSString *)email inviteCode:(NSString *)inviteCode passphrase:(NSString *)passphrase username:(NSString *)username deviceName:(NSString *)deviceName storeSecret:(BOOL)storeSecret skipMail:(BOOL)skipMail completion:(void (^)(NSError *error, KBRSignupRes *signupRes))completion;
 
 - (void)inviteRequest:(KBRInviteRequestRequestParams *)params completion:(void (^)(NSError *error))completion;
 
@@ -1882,14 +2033,26 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 @interface KBRTestRequest : KBRRequest
 
+/*!
+ Call test method.
+ Will trigger the testCallback method, whose result will be set in the
+ returned Test object, reply property.
+ */
 - (void)test:(KBRTestRequestParams *)params completion:(void (^)(NSError *error, KBRTest *test))completion;
 
 - (void)testWithName:(NSString *)name completion:(void (^)(NSError *error, KBRTest *test))completion;
 
+/*!
+ This is a service callback triggered from test(..).
+ The name param is what was passed into test.
+ */
 - (void)testCallback:(KBRTestCallbackRequestParams *)params completion:(void (^)(NSError *error, NSString *str))completion;
 
 - (void)testCallbackWithName:(NSString *)name completion:(void (^)(NSError *error, NSString *str))completion;
 
+/*!
+ For testing crashes.
+ */
 - (void)panic:(KBRPanicRequestParams *)params completion:(void (^)(NSError *error))completion;
 
 - (void)panicWithMessage:(NSString *)message completion:(void (^)(NSError *error))completion;
@@ -1898,10 +2061,18 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 @interface KBRTrackRequest : KBRRequest
 
+/*!
+ This will perform identify and track.
+ If forceRemoteCheck is true, we force all remote proofs to be checked
+ (otherwise a cache is used).
+ */
 - (void)track:(KBRTrackRequestParams *)params completion:(void (^)(NSError *error))completion;
 
 - (void)trackWithUserAssertion:(NSString *)userAssertion options:(KBRTrackOptions *)options forceRemoteCheck:(BOOL)forceRemoteCheck completion:(void (^)(NSError *error))completion;
 
+/*!
+ Track with token returned from identify.
+ */
 - (void)trackWithToken:(KBRTrackWithTokenRequestParams *)params completion:(void (^)(NSError *error))completion;
 
 - (void)trackWithTokenWithTrackToken:(NSString *)trackToken options:(KBRTrackOptions *)options completion:(void (^)(NSError *error))completion;
@@ -1932,22 +2103,41 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 - (void)listTrackersSelf:(void (^)(NSError *error, NSArray *items))completion;
 
+/*!
+ Load user summaries for the supplied uids.
+ They are "unchecked" in that the client is not verifying the info from the server.
+ If len(uids) > 500, the first 500 will be returned.
+ */
 - (void)loadUncheckedUserSummaries:(KBRLoadUncheckedUserSummariesRequestParams *)params completion:(void (^)(NSError *error, NSArray *items))completion;
 
 - (void)loadUncheckedUserSummariesWithUids:(NSArray *)uids completion:(void (^)(NSError *error, NSArray *items))completion;
 
+/*!
+ Load a user from the server.
+ */
 - (void)loadUser:(KBRLoadUserRequestParams *)params completion:(void (^)(NSError *error, KBRUser *user))completion;
 
 - (void)loadUserWithUid:(NSString *)uid completion:(void (^)(NSError *error, KBRUser *user))completion;
 
+/*!
+ Load a user + device keys from the server.
+ If cacheOK is true means that a cached value is ok to return.
+ */
 - (void)loadUserPlusKeys:(KBRLoadUserPlusKeysRequestParams *)params completion:(void (^)(NSError *error, KBRUserPlusKeys *userPlusKeys))completion;
 
 - (void)loadUserPlusKeysWithUid:(NSString *)uid cacheOK:(BOOL)cacheOK completion:(void (^)(NSError *error, KBRUserPlusKeys *userPlusKeys))completion;
 
+/*!
+ Load public keys for a user.
+ */
 - (void)loadPublicKeys:(KBRLoadPublicKeysRequestParams *)params completion:(void (^)(NSError *error, NSArray *items))completion;
 
 - (void)loadPublicKeysWithUid:(NSString *)uid completion:(void (^)(NSError *error, NSArray *items))completion;
 
+/*!
+ The list-tracking function get verified data from the tracking statements
+ in the user's own sigchain.
+ */
 - (void)listTracking:(KBRListTrackingRequestParams *)params completion:(void (^)(NSError *error, NSArray *items))completion;
 
 - (void)listTrackingWithFilter:(NSString *)filter completion:(void (^)(NSError *error, NSArray *items))completion;
@@ -1956,6 +2146,9 @@ typedef NS_ENUM (NSInteger, KBRPromptDefault) {
 
 - (void)listTrackingJSONWithFilter:(NSString *)filter verbose:(BOOL)verbose completion:(void (^)(NSError *error, NSString *str))completion;
 
+/*!
+ Search for users who match a given query.
+ */
 - (void)search:(KBRSearchRequestParams *)params completion:(void (^)(NSError *error, NSArray *items))completion;
 
 - (void)searchWithQuery:(NSString *)query completion:(void (^)(NSError *error, NSArray *items))completion;

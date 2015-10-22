@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/keybase/cli"
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
@@ -35,13 +37,13 @@ func (c *CmdDeviceRemove) Run() (err error) {
 	}
 
 	protocols := []rpc.Protocol{
-		NewSecretUIProtocol(),
+		NewSecretUIProtocol(G),
 	}
 	if err = RegisterProtocols(protocols); err != nil {
 		return err
 	}
 
-	return cli.RevokeDevice(keybase1.RevokeDeviceArg{
+	return cli.RevokeDevice(context.TODO(), keybase1.RevokeDeviceArg{
 		Force:    c.force,
 		DeviceID: c.id,
 	})

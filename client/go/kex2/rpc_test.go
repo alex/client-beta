@@ -4,12 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	keybase1 "github.com/keybase/client/go/protocol"
-	rpc "github.com/keybase/go-framed-msgpack-rpc"
-	"golang.org/x/net/context"
 	"io"
 	"testing"
 	"time"
+
+	keybase1 "github.com/keybase/client/go/protocol"
+	rpc "github.com/keybase/go-framed-msgpack-rpc"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -82,7 +83,7 @@ func (mp *mockProvisioner) CounterSign(input keybase1.HelloRes) (output []byte, 
 	return
 }
 
-func (mp *mockProvisioner) GetHelloArg() (res keybase1.HelloArg) {
+func (mp *mockProvisioner) GetHelloArg() (res keybase1.HelloArg, err error) {
 	res.Uid = mp.uid
 	return
 }
@@ -271,7 +272,7 @@ func TestFullProtocolY(t *testing.T) {
 		ch <- err
 	}()
 
-	// Run the privisionee
+	// Run the provisionee
 	go func() {
 		err := RunProvisionee(ProvisioneeArg{
 			KexBaseArg: KexBaseArg{

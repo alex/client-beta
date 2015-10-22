@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/keybase/cli"
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
@@ -29,13 +31,13 @@ func (c *CmdRevoke) Run() (err error) {
 	}
 
 	protocols := []rpc.Protocol{
-		NewSecretUIProtocol(),
+		NewSecretUIProtocol(G),
 	}
 	if err = RegisterProtocols(protocols); err != nil {
 		return err
 	}
 
-	return cli.RevokeKey(keybase1.RevokeKeyArg{
+	return cli.RevokeKey(context.TODO(), keybase1.RevokeKeyArg{
 		KeyID: c.id,
 	})
 }

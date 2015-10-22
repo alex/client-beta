@@ -39,7 +39,6 @@ func (n NullConfiguration) GetSecretKeyringTemplate() string              { retu
 func (n NullConfiguration) GetSalt() []byte                               { return nil }
 func (n NullConfiguration) GetSocketFile() string                         { return "" }
 func (n NullConfiguration) GetPidFile() string                            { return "" }
-func (n NullConfiguration) GetDaemonPort() (int, bool)                    { return 0, false }
 func (n NullConfiguration) GetStandalone() (bool, bool)                   { return false, false }
 func (n NullConfiguration) GetLocalRPCDebug() string                      { return "" }
 func (n NullConfiguration) GetTimers() string                             { return "" }
@@ -99,6 +98,7 @@ type TestParameters struct {
 	GPGOptions     []string
 	Debug          bool
 	Devel          bool // Whether we are in Devel Mode
+	SocketFile     string
 }
 
 func (tp TestParameters) GetDebug() (bool, bool) {
@@ -208,6 +208,10 @@ func (e *Env) getEnvPath(s string) []string {
 }
 
 func (e *Env) getEnvBool(s string) (bool, bool) {
+	return getEnvBool(s)
+}
+
+func getEnvBool(s string) (bool, bool) {
 	tmp := os.Getenv(s)
 	if len(tmp) == 0 {
 		return false, false
@@ -401,6 +405,7 @@ func (e *Env) GetUsername() NormalizedUsername {
 
 func (e *Env) GetSocketFile() (ret string, err error) {
 	ret = e.GetString(
+		func() string { return e.Test.SocketFile },
 		func() string { return e.cmd.GetSocketFile() },
 		func() string { return os.Getenv("KEYBASE_SOCKET_FILE") },
 		func() string { return e.config.GetSocketFile() },
@@ -421,14 +426,6 @@ func (e *Env) GetPidFile() (ret string, err error) {
 		ret = filepath.Join(e.GetRuntimeDir(), PIDFile)
 	}
 	return
-}
-
-func (e *Env) GetDaemonPort() int {
-	return e.GetInt(0,
-		func() (int, bool) { return e.cmd.GetDaemonPort() },
-		func() (int, bool) { return e.getEnvInt("KEYBASE_DAEMON_PORT") },
-		func() (int, bool) { return e.config.GetDaemonPort() },
-	)
 }
 
 func (e *Env) GetEmail() string {

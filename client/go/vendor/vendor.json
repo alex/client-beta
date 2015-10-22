@@ -89,8 +89,8 @@
 		},
 		{
 			"path": "github.com/keybase/go-framed-msgpack-rpc",
-			"revision": "6f0a7381848041e01f95ca2921a8decfab18a604",
-			"revisionTime": "2015-10-09T17:08:57-04:00"
+			"revision": "235a63781ea5762d601ea539d55bb48b7b1c8611",
+			"revisionTime": "2015-10-12T15:06:42-07:00"
 		},
 		{
 			"path": "github.com/keybase/go-jsonw",
@@ -101,6 +101,11 @@
 			"path": "github.com/keybase/go-keychain",
 			"revision": "041360662df035870dc6cafa8bbb357265d0da98",
 			"revisionTime": "2015-09-29T12:22:00-07:00"
+		},
+		{
+			"path": "github.com/keybase/go-logging",
+			"revision": "5bdfcf4cc17c3cefffc209f5780a259bafcd057e",
+			"revisionTime": "2015-10-15T11:08:39-07:00"
 		},
 		{
 			"path": "github.com/keybase/go-osxkeychain",
@@ -124,8 +129,8 @@
 		},
 		{
 			"path": "github.com/keybase/keybase-test-vectors/go",
-			"revision": "fc833da23dfb352183cf36abd061c26ac3ea3c6e",
-			"revisionTime": "2015-10-02T19:11:52-04:00"
+			"revision": "a5147a659b4a69f77e027e301e726e05492474d6",
+			"revisionTime": "2015-10-20T11:39:53-04:00"
 		},
 		{
 			"path": "github.com/keybase/miniline",
@@ -143,9 +148,9 @@
 			"revisionTime": "2015-05-20T12:37:12-04:00"
 		},
 		{
-			"path": "github.com/op/go-logging",
-			"revision": "e8d5414f0947014548c2334044a0fac13187dfee",
-			"revisionTime": "2015-05-25T13:26:48+02:00"
+			"path": "github.com/natefinch/npipe",
+			"revision": "0938d701e50e580f5925c773055eb6d6b32a0cbc",
+			"revisionTime": "2014-10-08T16:43:58+02:00"
 		},
 		{
 			"path": "github.com/syndtr/goleveldb/leveldb",

@@ -3,6 +3,8 @@ package client
 import (
 	"errors"
 
+	"golang.org/x/net/context"
+
 	"github.com/keybase/cli"
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
@@ -11,12 +13,17 @@ import (
 )
 
 type CmdLogin struct {
+	libkb.Contextified
 	Username  string
 	sessionID int
 }
 
-func NewLoginUIProtocol() rpc.Protocol {
-	return keybase1.LoginUiProtocol(GlobUI.GetLoginUI())
+func NewCmdLoginRunner(g *libkb.GlobalContext) *CmdLogin {
+	return &CmdLogin{Contextified: libkb.NewContextified(g)}
+}
+
+func NewLoginUIProtocol(g *libkb.GlobalContext) rpc.Protocol {
+	return keybase1.LoginUiProtocol(g.UI.GetLoginUI())
 }
 
 func NewLocksmithUIProtocol() rpc.Protocol {
@@ -25,16 +32,16 @@ func NewLocksmithUIProtocol() rpc.Protocol {
 
 func (v *CmdLogin) client() (*keybase1.LoginClient, error) {
 	protocols := []rpc.Protocol{
-		NewLoginUIProtocol(),
-		NewSecretUIProtocol(),
+		NewLoginUIProtocol(v.G()),
+		NewSecretUIProtocol(v.G()),
 		NewLocksmithUIProtocol(),
-		NewGPGUIProtocol(),
+		NewGPGUIProtocol(v.G()),
 	}
 	if err := RegisterProtocols(protocols); err != nil {
 		return nil, err
 	}
 
-	c, err := GetLoginClient()
+	c, err := GetLoginClient(v.G())
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +57,7 @@ func (v *CmdLogin) Run() error {
 	if err != nil {
 		return err
 	}
-	return cli.LoginWithPrompt(keybase1.LoginWithPromptArg{
+	return cli.LoginWithPrompt(context.TODO(), keybase1.LoginWithPromptArg{
 		SessionID: v.sessionID,
 		Username:  v.Username,
 	})
@@ -64,7 +71,7 @@ func (v *CmdLogin) Cancel() error {
 	if err != nil {
 		return err
 	}
-	return cli.CancelLogin(v.sessionID)
+	return cli.CancelLogin(context.TODO(), v.sessionID)
 }
 
 func NewCmdLogin(cl *libcmdline.CommandLine) cli.Command {

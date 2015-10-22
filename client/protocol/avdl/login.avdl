@@ -45,6 +45,8 @@ protocol login {
   void logout(int sessionID);
   void reset(int sessionID);
 
+  void recoverAccountFromEmailAddress(string email);
+
   /**
     PaperKey generates paper backup keys for restoring an account.
     It calls login_ui.displayPaperKeyPhrase with the phrase.
@@ -56,4 +58,8 @@ protocol login {
     */
   void unlock(int sessionID);
 
+  /**
+    Performs login.  username is optional.  Will use the kex2 flow.
+    */
+  void xLogin(int sessionID, string deviceType, string username);
 }

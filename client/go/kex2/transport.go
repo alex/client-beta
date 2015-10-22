@@ -5,12 +5,13 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
-	"github.com/ugorji/go/codec"
-	"golang.org/x/crypto/nacl/secretbox"
 	"io"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/ugorji/go/codec"
+	"golang.org/x/crypto/nacl/secretbox"
 )
 
 // DeviceID is a 16-byte identifier that each side of key exchange has. It's
@@ -323,7 +324,7 @@ func (c *Conn) pollLoop(poll time.Duration) (msgs [][]byte, err error) {
 	start := time.Now()
 	for {
 		newPoll := poll - totalWaitTime
-		msgs, err = c.router.Get(c.sessionID, c.deviceID, c.readSeqno, newPoll)
+		msgs, err = c.router.Get(c.sessionID, c.deviceID, c.readSeqno+1, newPoll)
 		totalWaitTime = time.Since(start)
 		if err != nil || len(msgs) > 0 || totalWaitTime >= poll {
 			return

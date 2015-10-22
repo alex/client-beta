@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/keybase/cli"
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
@@ -40,13 +42,13 @@ func (v *CmdUntrack) Run() error {
 	}
 
 	protocols := []rpc.Protocol{
-		NewSecretUIProtocol(),
+		NewSecretUIProtocol(G),
 	}
 	if err = RegisterProtocols(protocols); err != nil {
 		return err
 	}
 
-	return cli.Untrack(keybase1.UntrackArg{
+	return cli.Untrack(context.TODO(), keybase1.UntrackArg{
 		Username: v.user,
 	})
 }

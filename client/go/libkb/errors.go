@@ -564,11 +564,11 @@ func (e NoUsernameError) Error() string {
 //=============================================================================
 
 type UnmarshalError struct {
-	t string
+	T string
 }
 
 func (u UnmarshalError) Error() string {
-	return "Bad " + u.t + " packet"
+	return "Bad " + u.T + " packet"
 }
 
 type VerificationError struct{}
@@ -1114,4 +1114,12 @@ type PIDFileLockError struct {
 
 func (e PIDFileLockError) Error() string {
 	return fmt.Sprintf("error locking %s: server already running", e.Filename)
+}
+
+type SecretStoreError struct {
+	Msg string
+}
+
+func (e SecretStoreError) Error() string {
+	return "Secret store error: " + e.Msg
 }

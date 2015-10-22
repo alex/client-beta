@@ -3,6 +3,8 @@ package client
 import (
 	"fmt"
 
+	"golang.org/x/net/context"
+
 	"github.com/keybase/cli"
 	"github.com/keybase/client/go/libcmdline"
 	"github.com/keybase/client/go/libkb"
@@ -18,7 +20,7 @@ type CmdDeviceAdd struct {
 	sessionID int
 }
 
-const cmdDevAddDesc = `When you are adding a new device to your account and you have an 
+const cmdDevAddDesc = `When you are adding a new device to your account and you have an
 existing device, you will be prompted to use this command on your
 existing device to authorize the new device.`
 
@@ -47,14 +49,14 @@ func (c *CmdDeviceAdd) Run() error {
 		return err
 	}
 	protocols := []rpc.Protocol{
-		NewSecretUIProtocol(),
+		NewSecretUIProtocol(G),
 		NewLocksmithUIProtocol(),
 	}
 	if err := RegisterProtocols(protocols); err != nil {
 		return err
 	}
 
-	return cli.DeviceAdd(keybase1.DeviceAddArg{SecretPhrase: c.phrase, SessionID: c.sessionID})
+	return cli.DeviceAdd(context.TODO(), keybase1.DeviceAddArg{SecretPhrase: c.phrase, SessionID: c.sessionID})
 }
 
 // ParseArgv gets the secret phrase from the command args.

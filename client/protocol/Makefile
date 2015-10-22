@@ -35,9 +35,13 @@ build-stamp: \
 	json/login_ui.json \
 	json/metadata.json \
 	json/metadata_update.json \
+	json/notify_ctl.json \
+	json/notify_session.json \
+	json/notify_users.json \
 	json/pgp.json \
 	json/prove.json \
 	json/prove_ui.json \
+	json/provision_ui.json \
 	json/quota.json \
 	json/revoke.json \
 	json/secret_ui.json \
@@ -52,7 +56,7 @@ build-stamp: \
 	@mkdir -p json
 	date > $@
 
-../go/protocol/keybase_v1.go: build-stamp
+../go/protocol/keybase_v1.go: build-stamp ./bin/go.iced
 	@mkdir -p ../go/protocol
 	$(ICED) ./bin/go.iced -v 2 -d json -t go -o $@
 	gofmt -w $@
